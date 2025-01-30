@@ -5,7 +5,7 @@
 C++ = g++
 LDLIBS =  -lGL -lGLEW -lglfw
 HEADERS = opengl.h structs.h
-OBJS = loadmodel.o model.o
+OBJS = model.o
 
 debug ?= n
 ifeq ($(debug), y)
