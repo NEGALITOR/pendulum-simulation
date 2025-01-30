@@ -113,7 +113,6 @@ void setupVertices(void) {
 	};	
 
 
-
 	// Use ONE vao as before	
 	glGenVertexArrays(1, vao);
 	glBindVertexArray(vao[0]);
