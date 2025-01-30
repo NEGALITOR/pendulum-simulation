@@ -3,7 +3,7 @@
 #
 
 C++ = g++
-LDLIBS =  -lGL -lGLEW -lglfw -lassimp
+LDLIBS =  -lGL -lGLEW -lglfw
 HEADERS = opengl.h structs.h
 OBJS = loadmodel.o model.o
 
@@ -22,9 +22,6 @@ pendulum :	main.o $(OBJS)
 
 main.o : main.cpp $(HEADERS)
 	$(C++) $(CFLAGS) main.cpp -c
-
-loadmodel.o : loadmodel.cpp opengl.h
-	$(C++) $(CFLAGS) loadmodel.cpp -c
 
 model.o : model.cpp opengl.h structs.h
 	$(C++) $(CFLAGS) model.cpp -c
