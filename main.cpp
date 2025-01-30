@@ -6,8 +6,6 @@
 #include <fstream>
 #include <cmath>
 
-
-
 using namespace std;
 
 #define numVAOs 1
