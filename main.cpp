@@ -1,12 +1,13 @@
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include "opengl.h"
+#include "prototypes.h"
+#include "structs.h"
+
 #include <string>
-#include <iostream>
 #include <fstream>
 #include <cmath>
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp> // glm::value_ptr
-#include <glm/gtc/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
+
+
+
 using namespace std;
 
 #define numVAOs 1
@@ -24,6 +25,9 @@ GLuint mvLoc, projLoc, lookAtLoc;
 int width, height;
 float aspect;
 glm::mat4 pMat, vMat, mMat, mvMat, lookAtMat;
+
+Model models[3];
+uint32_t globalVertexCount;
 
 string readFile(const char *filePath) {
 	string content;
@@ -80,128 +84,103 @@ GLuint createShaderProgram() {
 
 
 void setupVertices(void) {
-	// Set up 12 triangles with 2 per each cube face.  That's 36 vertices
-	// or 108 points.
-	float vertexPositions[108] = {
-		-1.0f,  1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f, 1.0f,  1.0f, -1.0f, -1.0f,  1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f, 1.0f, -1.0f,  1.0f, 1.0f,  1.0f, -1.0f,
-		1.0f, -1.0f,  1.0f, 1.0f,  1.0f,  1.0f, 1.0f,  1.0f, -1.0f,
-		1.0f, -1.0f,  1.0f, -1.0f, -1.0f,  1.0f, 1.0f,  1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f, -1.0f,  1.0f,  1.0f, 1.0f,  1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f, -1.0f, -1.0f, -1.0f, -1.0f,  1.0f,  1.0f,
-		-1.0f, -1.0f, -1.0f, -1.0f,  1.0f, -1.0f, -1.0f,  1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,  1.0f, -1.0f,  1.0f,  1.0f, -1.0f, -1.0f,
-		1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f,  1.0f,
-		-1.0f,  1.0f, -1.0f, 1.0f,  1.0f, -1.0f, 1.0f,  1.0f,  1.0f,
-		1.0f,  1.0f,  1.0f, -1.0f,  1.0f,  1.0f, -1.0f,  1.0f, -1.0f
+
+	
+
+	const char* modelPaths[] = {
+		"models/stl/base.stl",
+		"models/stl/support.stl",
+		"models/stl/pendulum.stl"
 	};
 
-	float vertexColors[108] = {
-		1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-		1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-		0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-		1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 
-		1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f,
-		1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 
-		1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f 
-	};	
+	Model model;
+	glm::vec3 color;
 
+	color = {1.0, 0.0, 0.0};
+	model = loadModel(modelPaths[0], color);
+	models[0] = model;
 
-	// Use ONE vao as before	
-	glGenVertexArrays(1, vao);
-	glBindVertexArray(vao[0]);
-	// Use TWO virtual buffer objects, vbo[0] is for the vertexPositions
-	glGenBuffers(numVBOs, vbo);
+	color = {0.0, 1.0, 0.0};
+	model = loadModel(modelPaths[1], color);
+	model.position = {2, 0, 0};
+	models[1] = model;
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPositions), vertexPositions, GL_STATIC_DRAW);
+	color = {0.0, 0.0, 1.0};
+	model = loadModel(modelPaths[2], color);
+	model.position = {0, 0, 3.75};
+	model.rotation = {0, 0, 90};
+	model.scale = {0.6, 0.6, 0.6};
+	models[2] = model;
+	
+	
+	
 
-	// vbo[1] is for the vertexColors 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexColors), vertexColors, GL_STATIC_DRAW);
 }
 
 void init(GLFWwindow* window) {
 	renderingProgram = createShaderProgram();
-	// These are the camera positions and cube locations.  We will need them to
+	// These are the camera positions  align verticesand cube locations.  We will need them to
 	// set up the modelview and perspective matrices.  Note the scope of the variables.
 	cameraX  = -8.0f; cameraY  = -5.0f;  cameraZ  = 3.0f;
 	cubeLocX = 0.0f;  cubeLocY =  0.0f;  cubeLocZ = 0.0f;
 	spinZ = 0.0f;
-	deltaSpin=0.2;
+	deltaSpin = 0.0f;
 	setupVertices();
 }
 
 void display(GLFWwindow* window, double currentTime) {
 
 	glClear(GL_DEPTH_BUFFER_BIT);
-	glClearColor(0.0, 0.0, 0.0, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT);  // clear the background to black, each time
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glUseProgram(renderingProgram);
 
-	glUseProgram(renderingProgram);
+    // Get uniform locations
+    mvLoc = glGetUniformLocation(renderingProgram, "mv_matrix");
+    projLoc = glGetUniformLocation(renderingProgram, "proj_matrix");
+    lookAtLoc = glGetUniformLocation(renderingProgram, "lookAt_matrix");
 
-	// These are getting the memory locations of the modelview and projection
-	// matrices from the renderer
-	mvLoc = glGetUniformLocation(renderingProgram, "mv_matrix");
-	projLoc = glGetUniformLocation(renderingProgram, "proj_matrix");
-	lookAtLoc = glGetUniformLocation(renderingProgram, "lookAt_matrix");
+    glfwGetFramebufferSize(window, &width, &height);
+    aspect = (float)width / (float)height;
+    pMat = glm::perspective(1.0472f, aspect, 0.1f, 1000.0f);
 
-	// Now we set the perspective based on the window size and the aspect ratio.
-	// The glm::perspective function rerturn the projection matrix
-	glfwGetFramebufferSize(window, &width, &height);
-	aspect = (float)width / (float)height;
-	pMat = glm::perspective(1.0472f, aspect, 0.1f, 1000.0f);
+    vMat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 
-	// Now we are going to move the camera and cube to set up the modelview matrix.
-	//  -- NOTE -- now using lookAt to specify camera position, so set the vmat to
-	//  the identity matrix using glm:translate
-	vMat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-	// Now let's also leave the cube at the center of the scene
-	mMat = glm::translate(glm::mat4(1.0f), glm::vec3(cubeLocX, cubeLocY, cubeLocZ));
+    lookAtMat = glm::lookAt(glm::vec3(cameraX, cameraY, cameraZ),
+                            glm::vec3(cubeLocX, cubeLocY, cubeLocZ),
+                            glm::vec3(0.0f, 0.0f, 1.0f));
 
-	// Using the modelview matrix, start the cube rotating about the Z-axis
-	mMat = glm::rotate(mMat, glm::radians(spinZ), glm::vec3(0.0f, 0.0f, 1.0f));
-	// Since vMat, mMat, and mvMat are all defined as glm::mat4, OpenGL undestands that 
-	// the following line is actually MATRIX MULTIPLICATION and produces the modelvies 
-	// matrix from vMat and mMat.
-	mvMat = vMat * mMat;
+    for (int i = 0; i < (sizeof(models) / sizeof(*models)); i++) {
+        // Create transformation matrix for each model
+        mMat = glm::translate(glm::mat4(1.0f), models[i].position);
+		mMat = glm::rotate(mMat, glm::radians(models[i].rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+		mMat = glm::rotate(mMat, glm::radians(models[i].rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+		mMat = glm::rotate(mMat, glm::radians(models[i].rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+		mMat = glm::scale(mMat, models[i].scale);
 
-	// Now let's set up the lookAt matrix
-	lookAtMat = glm::lookAt( glm::vec3(cameraX,cameraY,cameraZ), 
-			glm::vec3(cubeLocX, cubeLocY, cubeLocZ),
-			glm::vec3(0.0f, 0.0f, 1.0f) );
+        // Apply additional transformations per model (example: rotation)
+        mMat = glm::rotate(mMat, glm::radians(spinZ), glm::vec3(0.0f, 0.0f, 1.0f));
+		//mMat = glm::rotate(mMat, glm::radians(spinZ), models[i].rotation);
 
-	// Now place the modelview and projection matrices in the memory locations
-	// we recovered earlier from the renderer.
-	glUniformMatrix4fv(mvLoc, 1, GL_FALSE, glm::value_ptr(mvMat));
-	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(pMat));
-	glUniformMatrix4fv(lookAtLoc, 1, GL_FALSE, glm::value_ptr(lookAtMat));
+        mvMat = vMat * mMat;
 
-	// Now we are going to bind the vertex attribute array buffer and then 
-	// tell GL what type of data is in the vbo.  They are
-	// floating point vertices arranged as 4 component vectors.
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
-	// And now we tell GL that this is the array we want to draw with glDrawArrays
-	glEnableVertexAttribArray(0);
-	// And now the colors
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-	glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
-	// And now we tell GL that this is the array we want to draw with glDrawArrays
-	glEnableVertexAttribArray(1);
+        glUniformMatrix4fv(mvLoc, 1, GL_FALSE, glm::value_ptr(mvMat));
+        glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(pMat));
+        glUniformMatrix4fv(lookAtLoc, 1, GL_FALSE, glm::value_ptr(lookAtMat));
 
-	// Turn on the Z-Buffer Depth Test
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
+        glBindBuffer(GL_ARRAY_BUFFER, models[i].vbo[0]);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+        glEnableVertexAttribArray(0);
 
-	// Now draw the 36 vertices in the vao 
-	glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindBuffer(GL_ARRAY_BUFFER, models[i].vbo[1]);
+        glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
+        glEnableVertexAttribArray(1);
+
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+
+        glDrawArrays(GL_TRIANGLES, 0, models[i].vertexCount);
+    }
 }
 
 int main(void) {
