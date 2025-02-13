@@ -121,7 +121,7 @@ void init(GLFWwindow* window) {
 	// set up the modelview and perspective matrices.  Note the scope of the variables.
 	cameraX  = -8.0f; cameraY  = -5.0f;  cameraZ  = 3.0f;
 	cubeLocX = 0.0f;  cubeLocY =  0.0f;  cubeLocZ = 0.0f;
-	spinZ = 0.0f;
+	spinZ = 1.0f;
 	deltaSpin = 0.0f;
 	setupVertices();
 }
@@ -148,7 +148,7 @@ void display(GLFWwindow* window, double currentTime) {
                             glm::vec3(cubeLocX, cubeLocY, cubeLocZ),
                             glm::vec3(0.0f, 0.0f, 1.0f));
 
-    for (int i = 0; i < (sizeof(models) / sizeof(*models)); i++) {
+    for (int i = 0; i < 2; i++) {
         // Create transformation matrix for each model
         mMat = glm::translate(glm::mat4(1.0f), models[i].position);
 		mMat = glm::rotate(mMat, glm::radians(models[i].rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -157,7 +157,7 @@ void display(GLFWwindow* window, double currentTime) {
 		mMat = glm::scale(mMat, models[i].scale);
 
         // Apply additional transformations per model (example: rotation)
-        mMat = glm::rotate(mMat, glm::radians(spinZ), glm::vec3(0.0f, 0.0f, 1.0f));
+        //mMat = glm::rotate(mMat, glm::radians(spinZ), glm::vec3(0.0f, 0.0f, 1.0f));
 		//mMat = glm::rotate(mMat, glm::radians(spinZ), models[i].rotation);
 
         mvMat = vMat * mMat;
@@ -179,6 +179,35 @@ void display(GLFWwindow* window, double currentTime) {
 
         glDrawArrays(GL_TRIANGLES, 0, models[i].vertexCount);
     }
+
+	mMat = glm::translate(glm::mat4(1.0f), models[2].position);
+	mMat = glm::rotate(mMat, glm::radians(models[2].rotation.x+=spinZ), glm::vec3(1.0f, 0.0f, 0.0f));
+	mMat = glm::rotate(mMat, glm::radians(models[2].rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+	mMat = glm::rotate(mMat, glm::radians(models[2].rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+	mMat = glm::scale(mMat, models[2].scale);
+
+	// Apply additional transformations per model (example: rotation)
+	//mMat = glm::rotate(mMat, glm::radians(spinZ), glm::vec3(0.0f, 0.0f, 1.0f));
+	//mMat = glm::rotate(mMat, glm::radians(spinZ), models[i].rotation);
+
+	mvMat = vMat * mMat;
+
+	glUniformMatrix4fv(mvLoc, 1, GL_FALSE, glm::value_ptr(mvMat));
+	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(pMat));
+	glUniformMatrix4fv(lookAtLoc, 1, GL_FALSE, glm::value_ptr(lookAtMat));
+
+	glBindBuffer(GL_ARRAY_BUFFER, models[2].vbo[0]);
+	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+	glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, models[2].vbo[1]);
+	glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
+	glEnableVertexAttribArray(1);
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
+
+	glDrawArrays(GL_TRIANGLES, 0, models[2].vertexCount);
 }
 
 int main(void) {
