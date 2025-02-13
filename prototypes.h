@@ -7,10 +7,6 @@
 #include <string>
 #include <vector>
 
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-
 //vector<float> loadMesh(const char* filePath);
 //vector<float> randomColors(int numVerts);
 //void renderMesh(GLuint VAO, int numTris);
