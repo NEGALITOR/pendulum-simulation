@@ -2,6 +2,9 @@
 #include "prototypes.h"
 #include "structs.h"
 
+#include "model.h"
+#include "shader.h"
+
 #include <string>
 #include <fstream>
 #include <cmath>
@@ -24,7 +27,8 @@ int width, height;
 float aspect;
 glm::mat4 pMat, vMat, mMat, mvMat, lookAtMat;
 
-Model models[3];
+vector<Model> models;
+vector<Shader> shaders;
 uint32_t globalVertexCount;
 
 string readFile(const char *filePath) {
@@ -84,13 +88,19 @@ GLuint createShaderProgram() {
 void setupVertices(void) {
 
 	
-
 	const char* modelPaths[] = {
 		"models/stl/base.stl",
 		"models/stl/support.stl",
 		"models/stl/pendulum.stl"
 	};
 
+	Model test("models/glb/base.glb");
+	test.color = {1.0f, 0.0f, 0.0f};
+	models.push_back(test);
+	Shader testS("vertShader.glsl", "fragShader.glsl");
+	shaders.push_back(testS);
+
+/*
 	Model model;
 	glm::vec3 color;
 
@@ -110,75 +120,160 @@ void setupVertices(void) {
 	model.scale = {0.6, 0.6, 0.6};
 	models[2] = model;
 	
-	
+	*/
 	
 
 }
 
 void init(GLFWwindow* window) {
-	renderingProgram = createShaderProgram();
+	//renderingProgram = createShaderProgram();
 	// These are the camera positions  align verticesand cube locations.  We will need them to
 	// set up the modelview and perspective matrices.  Note the scope of the variables.
 	cameraX  = -8.0f; cameraY  = -5.0f;  cameraZ  = 3.0f;
 	cubeLocX = 0.0f;  cubeLocY =  0.0f;  cubeLocZ = 0.0f;
-	spinZ = 0.0f;
+	spinZ = 2.0f;
 	deltaSpin = 0.0f;
 	setupVertices();
 }
 
 void display(GLFWwindow* window, double currentTime) {
 
+	GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR) {
+        std::cout << "OpenGL error: " << err << std::endl;
+    }
+
 	glClear(GL_DEPTH_BUFFER_BIT);
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
-    glUseProgram(renderingProgram);
+    //glUseProgram(renderingProgram);
 
-    // Get uniform locations
-    mvLoc = glGetUniformLocation(renderingProgram, "mv_matrix");
-    projLoc = glGetUniformLocation(renderingProgram, "proj_matrix");
-    lookAtLoc = glGetUniformLocation(renderingProgram, "lookAt_matrix");
+	shaders[0].use();
 
-    glfwGetFramebufferSize(window, &width, &height);
+	// Get uniform locations
+	mvLoc = glGetUniformLocation(shaders[0].ID, "mv_matrix");
+    projLoc = glGetUniformLocation(shaders[0].ID, "proj_matrix");
+    lookAtLoc = glGetUniformLocation(shaders[0].ID, "lookAt_matrix");
+
+	glfwGetFramebufferSize(window, &width, &height);
     aspect = (float)width / (float)height;
     pMat = glm::perspective(1.0472f, aspect, 0.1f, 1000.0f);
+	vMat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+	lookAtMat = glm::lookAt(glm::vec3(cameraX, cameraY, cameraZ), glm::vec3(cubeLocX, cubeLocY, cubeLocZ), glm::vec3(0.0f, 0.0f, 1.0f));
 
-    vMat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+	mMat = glm::mat4(1.0f);
+	mMat = glm::translate(mMat, glm::vec3(0.0f, 0.0f, -1.0f));
+	mMat = glm::rotate(mMat, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	mMat = glm::scale(mMat, glm::vec3(1.0f, 1.0f, 1.0f));
 
-    lookAtMat = glm::lookAt(glm::vec3(cameraX, cameraY, cameraZ),
-                            glm::vec3(cubeLocX, cubeLocY, cubeLocZ),
-                            glm::vec3(0.0f, 0.0f, 1.0f));
+	mvMat = vMat * mMat;
 
-    for (int i = 0; i < (sizeof(models) / sizeof(*models)); i++) {
-        // Create transformation matrix for each model
-        mMat = glm::translate(glm::mat4(1.0f), models[i].position);
+	shaders[0].setMat4("mv_matrix", mvMat);
+	shaders[0].setMat4("proj_matrix", pMat);
+	shaders[0].setMat4("lookAt_matrix", lookAtMat);
+
+	models[0].Draw(shaders[0]);
+
+	
+
+    /*
+
+    
+
+    
+
+    
+
+    for (int i = 0; i < 2; i++) {
+		glClear(GL_DEPTH_BUFFER_BIT);
+		glClearColor(0.0, 0.0, 0.0, 1.0);
+		glClear(GL_COLOR_BUFFER_BIT);
+		glUseProgram(renderingProgram);
+
+
+		// Get uniform locations
+		mvLoc = glGetUniformLocation(renderingProgram, "mv_matrix");
+		projLoc = glGetUniformLocation(renderingProgram, "proj_matrix");
+		lookAtLoc = glGetUniformLocation(renderingProgram, "lookAt_matrix");
+
+
+		glfwGetFramebufferSize(window, &width, &height);
+		aspect = (float)width / (float)height;
+		pMat = glm::perspective(1.0472f, aspect, 0.1f, 1000.0f);
+		vMat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+		lookAtMat = glm::lookAt(glm::vec3(cameraX, cameraY, cameraZ), glm::vec3(cubeLocX, cubeLocY, cubeLocZ), glm::vec3(0.0f, 0.0f, 1.0f));
+
+		// Create transformation matrix for each model
+		mMat = glm::translate(glm::mat4(1.0f), models[i].position);
 		mMat = glm::rotate(mMat, glm::radians(models[i].rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
 		mMat = glm::rotate(mMat, glm::radians(models[i].rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
 		mMat = glm::rotate(mMat, glm::radians(models[i].rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 		mMat = glm::scale(mMat, models[i].scale);
 
-        // Apply additional transformations per model (example: rotation)
-        mMat = glm::rotate(mMat, glm::radians(spinZ), glm::vec3(0.0f, 0.0f, 1.0f));
+		// Apply additional transformations per model (example: rotation)
+		mMat = glm::rotate(mMat, glm::radians(spinZ), glm::vec3(0.0f, 0.0f, 1.0f));
 		//mMat = glm::rotate(mMat, glm::radians(spinZ), models[i].rotation);
 
-        mvMat = vMat * mMat;
+		mvMat = vMat * mMat;
 
-        glUniformMatrix4fv(mvLoc, 1, GL_FALSE, glm::value_ptr(mvMat));
-        glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(pMat));
-        glUniformMatrix4fv(lookAtLoc, 1, GL_FALSE, glm::value_ptr(lookAtMat));
+		glUniformMatrix4fv(mvLoc, 1, GL_FALSE, glm::value_ptr(mvMat));
+		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(pMat));
+		glUniformMatrix4fv(lookAtLoc, 1, GL_FALSE, glm::value_ptr(lookAtMat));
 
-        glBindBuffer(GL_ARRAY_BUFFER, models[i].vbo[0]);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
-        glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, models[i].vbo[0]);
+		glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+		glEnableVertexAttribArray(0);
 
-        glBindBuffer(GL_ARRAY_BUFFER, models[i].vbo[1]);
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
-        glEnableVertexAttribArray(1);
+		glBindBuffer(GL_ARRAY_BUFFER, models[i].vbo[1]);
+		glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
+		glEnableVertexAttribArray(1);
 
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LEQUAL);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
 
-        glDrawArrays(GL_TRIANGLES, 0, models[i].vertexCount);
+		glDrawArrays(GL_TRIANGLES, 0, models[i].vertexCount);
     }
+
+	//glMatrixMode(GL_MODELVIEW);
+	//glLoadIdentity();
+
+	static float angle = 0.0f;
+
+	angle += 1.0f;
+
+	mMat = glm::translate(glm::mat4(1.0f), models[2].position);
+	
+	mMat = glm::rotate(mMat, glm::radians(models[2].rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+	mMat = glm::rotate(mMat, glm::radians(models[2].rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+	mMat = glm::rotate(mMat, glm::radians(models[2].rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+	mMat = glm::rotate(mMat, glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+
+	mMat = glm::scale(mMat, models[2].scale);
+
+	// Apply additional transformations per model (example: rotation)
+	
+	//mMat = glm::rotate(mMat, glm::radians(spinZ), models[i].rotation);
+
+	mvMat = vMat * mMat;
+
+	glUniformMatrix4fv(mvLoc, 1, GL_FALSE, glm::value_ptr(mvMat));
+	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(pMat));
+	glUniformMatrix4fv(lookAtLoc, 1, GL_FALSE, glm::value_ptr(lookAtMat));
+
+	glBindBuffer(GL_ARRAY_BUFFER, models[2].vbo[0]);
+	glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+	glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, models[2].vbo[1]);
+	glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
+	glEnableVertexAttribArray(1);
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
+
+	glDrawArrays(GL_TRIANGLES, 0, models[2].vertexCount);
+	*/
+
 }
 
 int main(void) {

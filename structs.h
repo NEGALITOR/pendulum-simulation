@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <array>
 
-struct Model
+/*struct Model
 {
     GLuint vao[1], vbo[2];
 
@@ -21,6 +21,32 @@ struct Model
     glm::vec3 scale = {1,1,1};
     glm::vec3 color;
     
+};*/
+
+
+
+// ASSIMP INTEGRATION
+
+struct Vertex
+{
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec2 textureCoords;
+};
+
+struct Texture
+{
+    unsigned int id;
+    string type;
+    string path;
+};
+
+struct Material
+{
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+    float shininess;
 };
 
 

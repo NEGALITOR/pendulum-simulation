@@ -6,7 +6,9 @@
 // can be used to select a particular buffer.
 
 layout (location=0) in vec3 position;
-layout (location=1) in vec3 in_color;
+layout (location=1) in vec3 normal;
+layout (location=2) in vec3 textureCoords;
+layout (location=3) in vec3 in_color;
 
 out vec4 color;
 

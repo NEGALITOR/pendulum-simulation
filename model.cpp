@@ -1,111 +1,128 @@
+#include "model.h"
 
+#include "shader.h"
+#include "mesh.h"
 
-#include "opengl.h"
-#include "structs.h"
-#include <string.h>
+#include <string>
+#include <vector>
 #include <fstream>
+#include <sstream>
 
-GLfloat* randomColors(int numVerts)
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
+
+Model::Model(const char *path)
 {
-    GLfloat* colors = new GLfloat[numVerts];
-    float color;
-
-    for (unsigned int i = 0; i < numVerts; i++)
-    {
-        colors[i] = float(rand()) / RAND_MAX;
-    }
-    return colors;
+    loadModel(path);
 }
 
-GLfloat* fillColors(int numVerts, glm::vec3 color)
+void Model::Draw(Shader &shader)
 {
-    GLfloat* colors = new GLfloat[numVerts];
-
-    for (unsigned int i = 0; i < numVerts; i+=3)
+    for(unsigned int i = 0; i < meshes.size(); i++)
     {
-        colors[i] = color.x;
-        colors[i+1] = color.y;
-        colors[i+2] = color.z;
+        //cout << meshes.size() << endl;
+        meshes[i].Draw(shader);
     }
-    return colors;
 }
 
-//void readSTLFile(const char* filename,  GLfloat **vertices, uint32_t &vertexCount,  GLfloat **normals, uint32_t &normalCount, uint32_t &triangleCount)
-Model loadModel(const char* filename, glm::vec3 color)
+
+void Model::loadModel(string path)
 {
-    ifstream file(filename, ios::in | ios::binary);
-    if (!file) {
-        std::cerr << "Failed to open file: " << filename << std::endl;
-        exit(1);
+    Assimp::Importer importer;
+    const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+
+    if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) 
+    {
+        cout << "ERROR::ASSIMP::" << importer.GetErrorString() << endl;
+        return;
     }
 
+    directory = path.substr(0, path.find_last_of('/'));
 
-    uint8_t header[80]; 
-    file.read(reinterpret_cast<char*>(header), 80); 
-    //printf("Header: %d\n", header);
+    processNode(scene->mRootNode, scene);
+}
 
-    uint32_t triCount;
-    file.read(reinterpret_cast<char*>(&triCount), sizeof(triCount));
-    //printf("Triangle Count: %d\n", triCount);
+void Model::processNode(aiNode *node, const aiScene *scene)
+{
 
-    GLfloat* localVerts = new GLfloat[triCount*9];
-    GLfloat* localNormals = new GLfloat[triCount*3];
-
-    //uint32_t vertCount = 0;
-    //uint32_t normCount = 0;
-
-    for (uint32_t i = 0; i < triCount; ++i)
+    for(unsigned int i = 0; i < node->mNumMeshes; i++)
     {
+        aiMesh *mesh = scene->mMeshes[node->mMeshes[i]]; 
+        meshes.push_back(processMesh(mesh, scene));			
+    }
 
-        glm::vec3 normal;
-        file.read(reinterpret_cast<char*>(&normal), sizeof(normal));
-        localNormals[i*3] = normal.x;
-        localNormals[i*3+1] = normal.y;
-        localNormals[i*3+2] = normal.z;
-        //normCount += 3;
+    for(unsigned int i = 0; i < node->mNumChildren; i++)
+    {
+        processNode(node->mChildren[i], scene);
+    }
+}
 
-        glm::vec3 vert[3];
-        file.read(reinterpret_cast<char*>(&vert), sizeof(vert));
+Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
+{
+    vector<Vertex> vertices;
+    vector<unsigned int> indices;
+    vector<Texture> textures;
 
-
-        uint16_t attribByteCount;
-        file.read(reinterpret_cast<char*>(&attribByteCount), sizeof(attribByteCount));
-
-        for (int j = 0; j < 3; ++j)
+    for(unsigned int i = 0; i < mesh->mNumVertices; i++)
+    {
+        Vertex vertex;
+        glm::vec3 vector;
+        // positions
+        vector.x = mesh->mVertices[i].x;
+        vector.y = mesh->mVertices[i].y;
+        vector.z = mesh->mVertices[i].z;
+        vertex.position = vector;
+        
+        /*
+        // normals
+        if (mesh->HasNormals())
         {
-            localVerts[i * 9 + j * 3]     = vert[j].x;
-            localVerts[i * 9 + j * 3 + 1] = vert[j].y;
-            localVerts[i * 9 + j * 3 + 2] = vert[j].z;
-            
+            vector.x = mesh->mNormals[i].x;
+            vector.y = mesh->mNormals[i].y;
+            vector.z = mesh->mNormals[i].z;
+            vertex.normal = vector;
         }
-
+        // texture coordinates
+        if(mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
+        {
+            glm::vec2 vec;
+            // a vertex can contain up to 8 different texture coordinates. We thus make the assumption that we won't 
+            // use models where a vertex can have multiple texture coordinates so we always take the first set (0).
+            vec.x = mesh->mTextureCoords[0][i].x; 
+            vec.y = mesh->mTextureCoords[0][i].y;
+            vertex.textureCoords = vec;
+        }
+        else
+            vertex.textureCoords = glm::vec2(0.0f, 0.0f);
+        */
+        vertices.push_back(vertex);
     }
-    file.close();
+    // now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
+    for(unsigned int i = 0; i < mesh->mNumFaces; i++)
+    {
+        aiFace face = mesh->mFaces[i];
+        // retrieve all indices of the face and store them in the indices vector
+        for(unsigned int j = 0; j < face.mNumIndices; j++)
+        {
+            indices.push_back(face.mIndices[j]); 
+            //cout << face.mIndices[j] << endl;
+        }
+                   
+    }
 
-    Model model = {.triangleCount = triCount, .vertices = localVerts, .vertexCount = triCount*9, .normals = localNormals, .normalCount = triCount*3};
-
-    //GLfloat* colors = randomColors(model.vertexCount);
-    model.color = color;
-    GLfloat* colors = fillColors(model.vertexCount, model.color);
-
-	// Use ONE vao as before	
-	glGenVertexArrays(1, model.vao);
-	glBindVertexArray(model.vao[0]);
-	// Use TWO virtual buffer objects, vbo[0] is for the vertexPositions
-	glGenBuffers(2, model.vbo);
-	
-
-	glBindBuffer(GL_ARRAY_BUFFER, model.vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, model.vertexCount * sizeof(GLfloat), model.vertices, GL_STATIC_DRAW);
-	
-	// vbo[1] is for the vertexColors 
-	glBindBuffer(GL_ARRAY_BUFFER, model.vbo[1]);
-	glBufferData(GL_ARRAY_BUFFER, model.vertexCount * sizeof(GLfloat), colors, GL_STATIC_DRAW);
-
-    return model;   
-    
+    // return a mesh object created from the extracted mesh data
+    if (color == glm::vec3(-1.0f))
+    {
+        cout << "done1" << endl;
+        return Mesh(vertices, indices, textures);
+        
+    }
+    else
+    {
+        cout << "done2" << endl;
+        return Mesh(vertices, indices, textures, color);
+        
+    }
 }
-
-
-
-

@@ -3,9 +3,9 @@
 #
 
 C++ = g++
-LDLIBS =  -lGL -lGLEW -lglfw
-HEADERS = opengl.h structs.h
-OBJS = model.o
+LDLIBS =  -lGL -lGLEW -lglfw -lassimp
+HEADERS = opengl.h structs.h shader.h mesh.h model.h
+OBJS = model.o mesh.o shader.o
 
 debug ?= n
 ifeq ($(debug), y)
@@ -23,8 +23,14 @@ pendulum :	main.o $(OBJS)
 main.o : main.cpp $(HEADERS)
 	$(C++) $(CFLAGS) main.cpp -c
 
-model.o : model.cpp opengl.h structs.h
+model.o : model.cpp structs.h shader.h mesh.h model.h
 	$(C++) $(CFLAGS) model.cpp -c
+
+mesh.o : mesh.cpp structs.h shader.h mesh.h
+	$(C++) $(CFLAGS) mesh.cpp -c
+
+shader.o : shader.cpp  structs.h shader.h
+	$(C++) $(CFLAGS) shader.cpp -c
 
 clean:
 	rm *.o
