@@ -18,6 +18,12 @@ Model::Model(const char *path)
     loadModel(path);
 }
 
+Model::Model(const char *path, glm::vec3 color)
+{
+    setColor(color);
+    loadModel(path);
+}
+
 void Model::Draw(Shader &shader)
 {
     for(unsigned int i = 0; i < meshes.size(); i++)
@@ -46,15 +52,16 @@ void Model::loadModel(string path)
 
 void Model::processNode(aiNode *node, const aiScene *scene)
 {
-
     for(unsigned int i = 0; i < node->mNumMeshes; i++)
     {
+        
         aiMesh *mesh = scene->mMeshes[node->mMeshes[i]]; 
         meshes.push_back(processMesh(mesh, scene));			
     }
 
     for(unsigned int i = 0; i < node->mNumChildren; i++)
     {
+        
         processNode(node->mChildren[i], scene);
     }
 }
@@ -75,35 +82,14 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
         vector.z = mesh->mVertices[i].z;
         vertex.position = vector;
         
-        /*
-        // normals
-        if (mesh->HasNormals())
-        {
-            vector.x = mesh->mNormals[i].x;
-            vector.y = mesh->mNormals[i].y;
-            vector.z = mesh->mNormals[i].z;
-            vertex.normal = vector;
-        }
-        // texture coordinates
-        if(mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
-        {
-            glm::vec2 vec;
-            // a vertex can contain up to 8 different texture coordinates. We thus make the assumption that we won't 
-            // use models where a vertex can have multiple texture coordinates so we always take the first set (0).
-            vec.x = mesh->mTextureCoords[0][i].x; 
-            vec.y = mesh->mTextureCoords[0][i].y;
-            vertex.textureCoords = vec;
-        }
-        else
-            vertex.textureCoords = glm::vec2(0.0f, 0.0f);
-        */
         vertices.push_back(vertex);
     }
-    // now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.
+
+
     for(unsigned int i = 0; i < mesh->mNumFaces; i++)
     {
         aiFace face = mesh->mFaces[i];
-        // retrieve all indices of the face and store them in the indices vector
+
         for(unsigned int j = 0; j < face.mNumIndices; j++)
         {
             indices.push_back(face.mIndices[j]); 
@@ -112,17 +98,37 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
                    
     }
 
-    // return a mesh object created from the extracted mesh data
-    if (color == glm::vec3(-1.0f))
+    //cout << color.x << endl;
+    
+    if (color.x == -1.0f)
     {
-        cout << "done1" << endl;
-        return Mesh(vertices, indices, textures);
-        
+        return Mesh(vertices, indices, textures, glm::vec3{1.0f, 0.0f, 0.0f});
     }
     else
     {
-        cout << "done2" << endl;
         return Mesh(vertices, indices, textures, color);
         
     }
+}
+
+
+
+void Model::setPosition(glm::vec3 pos)
+{
+    this->position = pos;
+}
+
+void Model::setRotation(glm::vec3 rot)
+{
+    this->rotation = rot;
+}
+
+void Model::setScale(glm::vec3 scale)
+{
+    this->scale = scale;
+}
+
+void Model::setColor(glm::vec3 color)
+{
+    this->color = color;
 }

@@ -19,7 +19,6 @@ class Mesh
         void Draw(Shader &shader);
 
     private:
-        void setupMesh();
         void setupMesh(glm::vec3 color);
         vector<glm::vec3> fillColors(int numVerts, glm::vec3 color);
 };
