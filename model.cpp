@@ -1,111 +1,134 @@
+#include "model.h"
 
+#include "shader.h"
+#include "mesh.h"
 
-#include "opengl.h"
-#include "structs.h"
-#include <string.h>
+#include <string>
+#include <vector>
 #include <fstream>
+#include <sstream>
 
-GLfloat* randomColors(int numVerts)
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
+
+Model::Model(const char *path)
 {
-    GLfloat* colors = new GLfloat[numVerts];
-    float color;
-
-    for (unsigned int i = 0; i < numVerts; i++)
-    {
-        colors[i] = float(rand()) / RAND_MAX;
-    }
-    return colors;
+    loadModel(path);
 }
 
-GLfloat* fillColors(int numVerts, glm::vec3 color)
+Model::Model(const char *path, glm::vec3 color)
 {
-    GLfloat* colors = new GLfloat[numVerts];
-
-    for (unsigned int i = 0; i < numVerts; i+=3)
-    {
-        colors[i] = color.x;
-        colors[i+1] = color.y;
-        colors[i+2] = color.z;
-    }
-    return colors;
+    setColor(color);
+    loadModel(path);
 }
 
-//void readSTLFile(const char* filename,  GLfloat **vertices, uint32_t &vertexCount,  GLfloat **normals, uint32_t &normalCount, uint32_t &triangleCount)
-Model loadModel(const char* filename, glm::vec3 color)
+void Model::Draw(Shader &shader)
 {
-    ifstream file(filename, ios::in | ios::binary);
-    if (!file) {
-        std::cerr << "Failed to open file: " << filename << std::endl;
-        exit(1);
+    for(unsigned int i = 0; i < meshes.size(); i++)
+    {
+        //cout << meshes.size() << endl;
+        meshes[i].Draw(shader);
+    }
+}
+
+
+void Model::loadModel(string path)
+{
+    Assimp::Importer importer;
+    const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+
+    if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) 
+    {
+        cout << "ERROR::ASSIMP::" << importer.GetErrorString() << endl;
+        return;
+    }
+
+    directory = path.substr(0, path.find_last_of('/'));
+
+    processNode(scene->mRootNode, scene);
+}
+
+void Model::processNode(aiNode *node, const aiScene *scene)
+{
+    for(unsigned int i = 0; i < node->mNumMeshes; i++)
+    {
+        
+        aiMesh *mesh = scene->mMeshes[node->mMeshes[i]]; 
+        meshes.push_back(processMesh(mesh, scene));			
+    }
+
+    for(unsigned int i = 0; i < node->mNumChildren; i++)
+    {
+        
+        processNode(node->mChildren[i], scene);
+    }
+}
+
+Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
+{
+    vector<Vertex> vertices;
+    vector<unsigned int> indices;
+    vector<Texture> textures;
+
+    for(unsigned int i = 0; i < mesh->mNumVertices; i++)
+    {
+        Vertex vertex;
+        glm::vec3 vector;
+        // positions
+        vector.x = mesh->mVertices[i].x;
+        vector.y = mesh->mVertices[i].y;
+        vector.z = mesh->mVertices[i].z;
+        vertex.position = vector;
+        
+        vertices.push_back(vertex);
     }
 
 
-    uint8_t header[80]; 
-    file.read(reinterpret_cast<char*>(header), 80); 
-    //printf("Header: %d\n", header);
-
-    uint32_t triCount;
-    file.read(reinterpret_cast<char*>(&triCount), sizeof(triCount));
-    //printf("Triangle Count: %d\n", triCount);
-
-    GLfloat* localVerts = new GLfloat[triCount*9];
-    GLfloat* localNormals = new GLfloat[triCount*3];
-
-    //uint32_t vertCount = 0;
-    //uint32_t normCount = 0;
-
-    for (uint32_t i = 0; i < triCount; ++i)
+    for(unsigned int i = 0; i < mesh->mNumFaces; i++)
     {
+        aiFace face = mesh->mFaces[i];
 
-        glm::vec3 normal;
-        file.read(reinterpret_cast<char*>(&normal), sizeof(normal));
-        localNormals[i*3] = normal.x;
-        localNormals[i*3+1] = normal.y;
-        localNormals[i*3+2] = normal.z;
-        //normCount += 3;
-
-        glm::vec3 vert[3];
-        file.read(reinterpret_cast<char*>(&vert), sizeof(vert));
-
-
-        uint16_t attribByteCount;
-        file.read(reinterpret_cast<char*>(&attribByteCount), sizeof(attribByteCount));
-
-        for (int j = 0; j < 3; ++j)
+        for(unsigned int j = 0; j < face.mNumIndices; j++)
         {
-            localVerts[i * 9 + j * 3]     = vert[j].x;
-            localVerts[i * 9 + j * 3 + 1] = vert[j].y;
-            localVerts[i * 9 + j * 3 + 2] = vert[j].z;
-            
+            indices.push_back(face.mIndices[j]); 
+            //cout << face.mIndices[j] << endl;
         }
-
+                   
     }
-    file.close();
 
-    Model model = {.triangleCount = triCount, .vertices = localVerts, .vertexCount = triCount*9, .normals = localNormals, .normalCount = triCount*3};
-
-    //GLfloat* colors = randomColors(model.vertexCount);
-    model.color = color;
-    GLfloat* colors = fillColors(model.vertexCount, model.color);
-
-	// Use ONE vao as before	
-	glGenVertexArrays(1, model.vao);
-	glBindVertexArray(model.vao[0]);
-	// Use TWO virtual buffer objects, vbo[0] is for the vertexPositions
-	glGenBuffers(2, model.vbo);
-	
-
-	glBindBuffer(GL_ARRAY_BUFFER, model.vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, model.vertexCount * sizeof(GLfloat), model.vertices, GL_STATIC_DRAW);
-	
-	// vbo[1] is for the vertexColors 
-	glBindBuffer(GL_ARRAY_BUFFER, model.vbo[1]);
-	glBufferData(GL_ARRAY_BUFFER, model.vertexCount * sizeof(GLfloat), colors, GL_STATIC_DRAW);
-
-    return model;   
+    //cout << color.x << endl;
     
+    if (color.x == -1.0f)
+    {
+        return Mesh(vertices, indices, textures, glm::vec3{1.0f, 0.0f, 0.0f});
+    }
+    else
+    {
+        return Mesh(vertices, indices, textures, color);
+        
+    }
 }
 
 
 
+void Model::setPosition(glm::vec3 pos)
+{
+    this->position = pos;
+}
 
+void Model::setRotation(glm::vec3 rot)
+{
+    this->rotation = rot;
+}
+
+void Model::setScale(glm::vec3 scale)
+{
+    this->scale = scale;
+}
+
+void Model::setColor(glm::vec3 color)
+{
+    this->color = color;
+}

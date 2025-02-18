@@ -1,0 +1,14 @@
+{
+    "files.associations": {
+        "text_encoding": "cpp",
+        "thread": "cpp",
+        "fstream": "cpp",
+        "vector": "cpp",
+        "string": "cpp",
+        "iostream": "cpp",
+        "cmath": "cpp",
+        "ostream": "cpp",
+        "bitset": "cpp",
+        "deque": "cpp"
+    }
+}

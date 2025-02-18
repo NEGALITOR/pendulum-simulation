@@ -3,24 +3,29 @@
 
 #include "opengl.h"
 
-#include <stdint.h>
-#include <array>
 
-struct Model
+// ASSIMP INTEGRATION
+
+struct Vertex
 {
-    GLuint vao[1], vbo[2];
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec2 textureCoords;
+};
 
-    uint32_t triangleCount;
-    GLfloat* vertices;
-    uint32_t vertexCount;
-    GLfloat* normals;
-    uint32_t normalCount;
+struct Texture
+{
+    unsigned int id;
+    string type;
+    string path;
+};
 
-    glm::vec3 position = {0,0,0};
-    glm::vec3 rotation = {0,0,0};
-    glm::vec3 scale = {1,1,1};
-    glm::vec3 color;
-    
+struct Material
+{
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+    float shininess;
 };
 
 
