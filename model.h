@@ -24,7 +24,8 @@ class Model
         void setPosition(glm::vec3 pos);
         void setRotation(glm::vec3 rot);
         void setScale(glm::vec3 scale);
-        void setColor(glm::vec3 color);        
+        void setColor(glm::vec3 color);
+        void changeColor(glm::vec3 color, Shader &shader);
 
         Model(const char *path);
         Model(const char *path, glm::vec3 color);

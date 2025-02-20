@@ -17,6 +17,8 @@ class Mesh
         Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures);
         Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures, glm::vec3 color);
         void Draw(Shader &shader);
+        void setupColor(glm::vec3 color);
+        
 
     private:
         void setupMesh(glm::vec3 color);

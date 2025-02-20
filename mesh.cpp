@@ -50,8 +50,6 @@ void Mesh::Draw(Shader &shader)
 
 void Mesh::setupMesh(glm::vec3 color)
 {
-    
-    vector<glm::vec3> colors = fillColors(indices.size(), color);
 
     glGenVertexArrays(1, VAO);
     glBindVertexArray(VAO[0]);
@@ -84,15 +82,22 @@ void Mesh::setupMesh(glm::vec3 color)
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, textureCoords));
 
     // Color
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
-	glBufferData(GL_ARRAY_BUFFER, indices.size() * sizeof(glm::vec3), &colors[0], GL_STATIC_DRAW);
+    setupColor(color);
 
     glEnableVertexAttribArray(3);
     glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*) 0);
     
-
     glBindVertexArray(0);
     
+}
+
+void Mesh::setupColor(glm::vec3 color)
+{
+    vector<glm::vec3> colors = fillColors(indices.size(), color);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+	glBufferData(GL_ARRAY_BUFFER, indices.size() * sizeof(glm::vec3), &colors[0], GL_STATIC_DRAW);
+
 }
 
 

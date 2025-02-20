@@ -131,4 +131,10 @@ void Model::setScale(glm::vec3 scale)
 void Model::setColor(glm::vec3 color)
 {
     this->color = color;
+    for(unsigned int i = 0; i < meshes.size(); i++)
+    {
+        //cout << meshes.size() << endl;
+        meshes[i].setupColor(color);
+    }
+    //glBindVertexArray(0);
 }
