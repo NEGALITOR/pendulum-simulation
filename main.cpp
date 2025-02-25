@@ -65,8 +65,8 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
 // Keyboard callback function
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-    const float moveSpeed = 0.1f;
-    const float radiusSpeed = 0.5f;
+    const float moveSpeed = 0.02f;
+    const float radiusSpeed = 0.05f;
     //if (action == GLFW_REPEAT) cout << "done" <<endl;
     if (action == GLFW_PRESS || action == GLFW_REPEAT) 
 	{
