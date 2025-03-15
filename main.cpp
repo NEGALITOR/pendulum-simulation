@@ -11,15 +11,14 @@
 
 using namespace std;
 
-#define numVAOs 1
-#define numVBOs 2
-
 float cameraX, cameraY, cameraZ;
 float cubeLocX, cubeLocY, cubeLocZ;
 float spinZ, deltaSpin;
-GLuint renderingProgram;
-GLuint vao[numVAOs];
-GLuint vbo[numVBOs];
+float radius = 10.0f; // Distance from camera to center
+float horizontalAngle = 0.0f; // Angle for left/right movement
+float verticalAngle = 0.0f; // Angle for up/down movement
+float originalSpinRate = 0.2f; // Store original rotation rate
+bool isPendulumStopped = false;
 
 // variable allocation for display
 GLuint mvLoc, projLoc, lookAtLoc;
@@ -31,59 +30,78 @@ vector<Model> models;
 vector<Shader> shaders;
 uint32_t globalVertexCount;
 
-string readFile(const char *filePath) {
-	string content;
-	ifstream fileStream(filePath, ios::in);
-	string line = "";
-	while (!fileStream.eof()) {
-		getline(fileStream, line);
-		content.append(line + "\n");
-	}
-	fileStream.close();
-	return content;
+// Mouse callback function
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+    if (action == GLFW_PRESS) {
+        switch (button) {
+            case GLFW_MOUSE_BUTTON_RIGHT:
+				if (isPendulumStopped) 
+				{
+					isPendulumStopped = false;
+					models[2].setColor(glm::vec3(0.0f, 0.0f, 0.75f));
+				}
+                deltaSpin += 0.5f; // Increase rotation speed
+                break;
+            case GLFW_MOUSE_BUTTON_LEFT:
+                deltaSpin -= 0.5f; // Decrease rotation speed
+                if (deltaSpin <= 0.0f) 
+				{
+					isPendulumStopped = true;
+                    deltaSpin = 0.0f;
+                    // Change pendulum color to red when stopped
+                    models[2].setColor(glm::vec3(1.0f, 0.0f, 0.0f));
+                }
+                break;
+            case GLFW_MOUSE_BUTTON_MIDDLE:
+                // Reset to original position and speed
+                spinZ = 0.0f;
+                deltaSpin = originalSpinRate;
+                isPendulumStopped = false;
+                models[2].setColor(glm::vec3(0.0f, 0.0f, 1.0f)); // Reset to original color
+                break;
+        }
+    }
 }
 
-GLuint createShaderProgram() {
-	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	GLuint vfprogram = glCreateProgram();
-
-	string vertShaderStr = readFile("vertShader.glsl");
-	string fragShaderStr = readFile("fragShader.glsl");
-	const char *vertShaderSrc = vertShaderStr.c_str();
-	const char *fragShaderSrc = fragShaderStr.c_str();
-
-	glShaderSource(vertexShader, 1, &vertShaderSrc, NULL);
-	glShaderSource(fragmentShader, 1, &fragShaderSrc, NULL);
-	glCompileShader(vertexShader);
-	glCompileShader(fragmentShader);
-
-	// The following code checks to see if the vertex and fragment
-	// fragment shaders compiled properly on the GPU.
-
-	int  success;
-	char infoLog[512];
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-	if(!success)
+// Keyboard callback function
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    const float moveSpeed = 0.02f;
+    const float radiusSpeed = 0.05f;
+    //if (action == GLFW_REPEAT) cout << "done" <<endl;
+    if (action == GLFW_PRESS || action == GLFW_REPEAT) 
 	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-	if(!success)
-	{
-		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-
-
-	glAttachShader(vfprogram, vertexShader);
-	glAttachShader(vfprogram, fragmentShader);
-	glLinkProgram(vfprogram);
-
-	return vfprogram;
+        switch (key) 
+		{
+            case GLFW_KEY_LEFT:
+                horizontalAngle -= moveSpeed;
+                break;
+            case GLFW_KEY_RIGHT:
+                horizontalAngle += moveSpeed;
+                break;
+            case GLFW_KEY_UP:
+                verticalAngle += moveSpeed;
+                verticalAngle = glm::min(verticalAngle, 1.5f); // Limit vertical angle
+                break;
+            case GLFW_KEY_DOWN:
+                verticalAngle -= moveSpeed;
+                verticalAngle = glm::max(verticalAngle, -1.5f); // Limit vertical angle
+                break;
+            case GLFW_KEY_PAGE_UP:
+                radius -= radiusSpeed;
+                radius = glm::max(radius, 2.0f); // Minimum radius
+                break;
+            case GLFW_KEY_PAGE_DOWN:
+                radius += radiusSpeed;
+                radius = glm::min(radius, 20.0f); // Maximum radius
+                break;
+        }
+        
+        // Update camera position based on spherical coordinates
+        cameraX = radius * cos(verticalAngle) * cos(horizontalAngle);
+        cameraY = radius * cos(verticalAngle) * sin(horizontalAngle);
+        cameraZ = radius * sin(verticalAngle);
+    }
 }
-
 
 void setupVertices(void) {
 
@@ -91,43 +109,19 @@ void setupVertices(void) {
 	shaders.push_back(testS);
 
 	//Model test("models/glb/base.glb");
-	Model base("models/glb/base.glb", glm::vec3{1.0f, 0.0f, 0.0f});
+	Model base("models/glb/base.glb", glm::vec3{0.75f, 0.0f, 0.75f});
 	base.setPosition(glm::vec3 {0.0f, 0.0f, -1.0f});
 	models.push_back(base);
 	
-	Model support("models/glb/support.glb", glm::vec3{0.0f, 1.0f, 0.0f});
-	support.setPosition(glm::vec3 {2.0f, 0.0, -1.0f});
+	Model support("models/glb/support.glb", glm::vec3{0.0f, 0.75f, 0.0f});
+	support.setPosition(glm::vec3 {2.0f, 0.0f, -0.5f});
 	models.push_back(support);
 
-	Model pendulum("models/glb/pendulum.glb", glm::vec3{0.0f, 0.0f, 1.0f});
-	pendulum.setPosition(glm::vec3 {0.0f, 0.0, 2.5f});
+	Model pendulum("models/glb/pendulum.glb", glm::vec3{0.0f, 0.0f, 0.75f});
+	pendulum.setPosition(glm::vec3 {0.0f, 0.0f, 3.0f});
 	pendulum.setRotation(glm::vec3{0.0f, 0.0f, 90.0f});
 	pendulum.setScale(glm::vec3{0.6f, 0.6f, 0.6f});
-	models.push_back(pendulum);
-	
-
-/*
-	Model model;
-	glm::vec3 color;
-
-	color = {1.0, 0.0, 0.0};
-	model = loadModel(modelPaths[0], color);
-	models[0] = model;
-
-	color = {0.0, 1.0, 0.0};
-	model = loadModel(modelPaths[1], color);
-	model.position = {2, 0, 0};
-	models[1] = model;
-
-	color = {0.0, 0.0, 1.0};
-	model = loadModel(modelPaths[2], color);
-	model.position = {0, 0, 3.75};
-	model.rotation = {0, 0, 90};
-	model.scale = {0.6, 0.6, 0.6};
-	models[2] = model;
-	
-	*/
-	
+	models.push_back(pendulum);	
 
 }
 
@@ -135,11 +129,21 @@ void init(GLFWwindow* window) {
 	//renderingProgram = createShaderProgram();
 	// These are the camera positions  align verticesand cube locations.  We will need them to
 	// set up the modelview and perspective matrices.  Note the scope of the variables.
-	cameraX  = -8.0f; cameraY  = -5.0f;  cameraZ  = 3.0f;
-	cubeLocX = 0.0f;  cubeLocY =  0.0f;  cubeLocZ = 0.0f;
-	spinZ = 2.0f;
-	deltaSpin = 0.0f;
-	setupVertices();
+    cameraX = -8.0f; cameraY = -5.0f; cameraZ = 3.0f;
+    cubeLocX = 0.0f; cubeLocY = 0.0f; cubeLocZ = 0.0f;
+
+	radius = sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
+    horizontalAngle = atan2(cameraY, cameraX);
+    verticalAngle = asin(cameraZ / radius);
+
+    spinZ = 0.0f;
+    deltaSpin = originalSpinRate;
+    
+    // Set up callbacks
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetKeyCallback(window, key_callback);
+    
+    setupVertices();
 }
 
 void display(GLFWwindow* window, double currentTime) {
@@ -211,7 +215,7 @@ void display(GLFWwindow* window, double currentTime) {
 
 	mMat = glm::translate(mMat, glm::vec3(0.0f, 0.0f, 0.5f));
 	
-	mMat = glm::rotate(mMat, glm::radians(models[2].rotation.x+=spinZ), glm::vec3(1.0f, 0.0f, 0.0f));
+	mMat = glm::rotate(mMat, glm::radians(models[2].rotation.x+spinZ), glm::vec3(1.0f, 0.0f, 0.0f));
 	mMat = glm::rotate(mMat, glm::radians(models[2].rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
 	mMat = glm::rotate(mMat, glm::radians(models[2].rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
@@ -228,27 +232,28 @@ void display(GLFWwindow* window, double currentTime) {
 
 }
 
+
 int main(void) {
-	if (!glfwInit()) { exit(EXIT_FAILURE); }
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	GLFWwindow* window = glfwCreateWindow(600, 600, "Under Construction", NULL, NULL);
-	glfwMakeContextCurrent(window);
-	glewExperimental = GL_TRUE;
-	if (glewInit() != GLEW_OK) { exit(EXIT_FAILURE); }
-	glfwSwapInterval(1);
+    if (!glfwInit()) { exit(EXIT_FAILURE); }
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    GLFWwindow* window = glfwCreateWindow(600, 600, "Pendulum Simulation", NULL, NULL);
+    glfwMakeContextCurrent(window);
+    glewExperimental = GL_TRUE;
+    if (glewInit() != GLEW_OK) { exit(EXIT_FAILURE); }
+    glfwSwapInterval(1);
 
-	init(window);
+    init(window);
 
-	while (!glfwWindowShouldClose(window)) {
-		display(window, glfwGetTime());
+    while (!glfwWindowShouldClose(window)) {
+        display(window, glfwGetTime());
 		spinZ = spinZ + deltaSpin;
-		if ( spinZ > 360.0 ) { spinZ = 0.0; }
-		glfwSwapBuffers(window);
-		glfwPollEvents();
-	}
+		if (spinZ > 360.0) { spinZ = 0.0; }
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
 
-	glfwDestroyWindow(window);
-	glfwTerminate();
-	exit(EXIT_SUCCESS);
+    glfwDestroyWindow(window);
+    glfwTerminate();
+    exit(EXIT_SUCCESS);
 }
