@@ -1,33 +1,3 @@
-/*#ifndef MESH_H
-#define MESH_H
-
-#include "structs.h"
-#include "shader.h"
-
-#include <vector>
-
-class Mesh
-{
-    public:
-        GLuint VAO[1], VBO[2], EBO[1];
-        vector<Vertex> vertices;
-        vector<unsigned int> indices;
-        vector<Texture> textures;
-
-        Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures);
-        //Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures, glm::vec3 color);
-        void Draw(Shader &shader);
-        void setupColor(glm::vec3 color);
-        
-
-    private:
-        //void setupMesh(glm::vec3 color);
-        void setupMesh();
-        vector<glm::vec3> fillColors(int numVerts, glm::vec3 color);
-};
-
-#endif
-*/
 #ifndef MESH_H
 #define MESH_H
 
@@ -39,7 +9,6 @@ class Mesh
 class Mesh
 {
     public:
-        //GLuint VAO[1], VBO[2], EBO[1];
         vector<Vertex> vertices;
         vector<unsigned int> indices;
         vector<Texture> textures;
@@ -47,14 +16,10 @@ class Mesh
         unsigned int VAO, VBO, EBO;
 
         Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures);
-        //Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures, glm::vec3 color);
         void Draw(Shader &shader);
-        void setupColor(glm::vec3 color);
 
     private:
-        //void setupMesh(glm::vec3 color);
         void setupMesh();
-        vector<glm::vec3> fillColors(int numVerts, glm::vec3 color);
 };
 
 #endif

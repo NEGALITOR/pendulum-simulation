@@ -5,16 +5,6 @@
 
 #include <vector>
 
-/*
-Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures, glm::vec3 color)
-{
-    this->vertices = vertices;
-    this->indices = indices;
-    this->textures = textures;
-
-    setupMesh(color);
-}
-*/
 Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures)
 {
     this->vertices = vertices;
@@ -42,7 +32,7 @@ void Mesh::Draw(Shader &shader)
     for(unsigned int i = 0; i < textures.size(); i++)
     {
         glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
-        // retrieve texture number (the N in diffuse_textureN)
+
         string number;
         string name = textures[i].type;
         if(name == "texture_diffuse")
@@ -89,53 +79,6 @@ void Mesh::Draw(Shader &shader)
 
 
 }
-
-/*
-void Mesh::setupMesh(glm::vec3 color)
-{
-
-    glGenVertexArrays(1, VAO);
-    glBindVertexArray(VAO[0]);
-
-    
-    //cout << vertices.size() << endl;
-    //cout << indices.size() << endl;
-    //cout << colors.size() << endl;
-    
-
-    glGenBuffers(2, VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
-
-    glGenBuffers(1, EBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[0]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
-
-    
-    // Vertex positions
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) 0);
-    
-    // Vertex normals
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
-
-    // Vertex texture coords
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, textureCoords));
-
-    // Color
-    setupColor(color);
-
-    glEnableVertexAttribArray(3);
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*) 0);
-    
-    glBindVertexArray(0);
-    
-}
-*/
-
-
 
 void Mesh::setupMesh()
 {

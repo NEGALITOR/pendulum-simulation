@@ -211,8 +211,6 @@ unsigned int Model::TextureFromFile(const aiScene *scene, aiString path)
             std::memcpy(textureData.data(), texture->pcData, dataSize);
 
             // Load the image from memory using SOIL2
-            
-            //SOIL_load_image
             unsigned char* imgData = SOIL_load_image_from_memory(
                 textureData.data(),   // Pointer to the raw texture data
                 textureData.size(),   // Size of the data
@@ -239,8 +237,7 @@ unsigned int Model::TextureFromFile(const aiScene *scene, aiString path)
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-                // You can now use imgData in OpenGL (e.g., to create a texture)
-                // Don't forget to free the image data when done!
+                // Freeing imgdata
                 SOIL_free_image_data(imgData);
             } else {
                 std::cerr << "Failed to load image from memory!" << std::endl;
@@ -253,102 +250,6 @@ unsigned int Model::TextureFromFile(const aiScene *scene, aiString path)
         
     
 }
-
-/*
-vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type, string typeName)
-{
-    
-    vector<Texture> textures;
-
-    unsigned int textureCount = mat->GetTextureCount(type);
-    //cout << "Found " << textureCount << " textures of type " << typeName << endl;
-
-    
-    
-
-    for(unsigned int i = 0; i < mat->GetTextureCount(type); i++)
-    {
-
-        aiString str;
-        aiReturn ret = mat->Get(AI_MATKEY_TEXTURE(type, i), str);
-
-        //cout << str.C_Str() << endl;
-
-        //aiReturn result = mat->GetTexture(type, i, &str);        
-        
-        //aiString str;
-        //mat->GetTexture(type, i, &str);
-
-        // check if texture was loaded before and if so, continue to next iteration: skip loading a new texture
-        bool skip = false;
-        for(unsigned int j = 0; j < textures_loaded.size(); j++)
-        {
-            if(std::strcmp(textures_loaded[j].path.data(), str.C_Str()) == 0)
-            {
-                textures.push_back(textures_loaded[j]);
-                skip = true; // a texture with the same filepath has already been loaded, continue to next one. (optimization)
-                break;
-            }
-        }
-        if(!skip)
-        {   // if texture hasn't been loaded already, load it
-            Texture texture;
-            texture.id = TextureFromFile(str.C_Str(), this->directory);
-            texture.type = typeName;
-            texture.path = str.C_Str();
-            textures.push_back(texture);
-            textures_loaded.push_back(texture);  // store it as texture loaded for entire model, to ensure we won't unnecessary load duplicate textures.
-        }
-    }
-    return textures;
-    
-}
-
-unsigned int Model::TextureFromFile(const char *path, const string &directory)
-{
-    
-    string filename = string(path);
-    filename = directory + '/' + filename;
-    //cout << "Filepath: " << filename << endl;
-
-    unsigned int textureID;
-    glGenTextures(1, &textureID);
-
-    int width, height, nrComponents;
-    unsigned char *data = SOIL_load_image(filename.c_str(), &width, &height, &nrComponents, 0);
-
-    //cout << "Loaded texture data: " << (data ? "success" : "failure") << endl;
-
-    if (data)
-    {
-        GLenum format;
-        if (nrComponents == 1)
-            format = GL_RED;
-        else if (nrComponents == 3)
-            format = GL_RGB;
-        else if (nrComponents == 4)
-            format = GL_RGBA;
-
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        SOIL_free_image_data(data);
-    }
-    else
-    {
-        std::cout << "Texture failed to load at path: " << path << std::endl;
-        //SOIL_free_image_data(data);
-    }
-
-    return textureID;
-}
-*/
 
 void Model::setPosition(glm::vec3 pos)
 {
