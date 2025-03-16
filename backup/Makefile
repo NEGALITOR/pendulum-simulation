@@ -1,6 +1,10 @@
+# Structured makefile for camera placement
+#
+#
+
 C++ = g++
-CFLAGS = -I./includes/SOIL2
-LDLIBS = -lGL -lGLEW -lglfw -lassimp -L./includes/SOIL2 -lsoil2
+CFLAGS = -I./SOIL2
+LDLIBS = -lGL -lGLEW -lglfw -lassimp -L./SOIL2 -lsoil2
 HEADERS = opengl.h structs.h shader.h mesh.h model.h
 OBJS = model.o mesh.o shader.o
 
@@ -10,6 +14,7 @@ ifeq ($(debug), y)
 else
     CFLAGS += -O2 -g
 endif
+
 
 all: pendulum
 
@@ -29,8 +34,8 @@ shader.o : shader.cpp  structs.h shader.h
 	$(C++) $(CFLAGS) shader.cpp -c
 
 clean:
-	rm -f *.o pen
+	rm *.o
 
 pristine:
-	rm -f *.o pen
+	rm *.o
 	touch *

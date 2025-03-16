@@ -38,7 +38,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 				if (isPendulumStopped) 
 				{
 					isPendulumStopped = false;
-					//models[2].setColor(glm::vec3(0.0f, 0.0f, 0.75f));
+					models[2].setColor(glm::vec3(0.0f, 0.0f, 0.75f));
 				}
                 deltaSpin += 0.5f; // Increase rotation speed
                 break;
@@ -49,7 +49,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 					isPendulumStopped = true;
                     deltaSpin = 0.0f;
                     // Change pendulum color to red when stopped
-                    //models[2].setColor(glm::vec3(1.0f, 0.0f, 0.0f));
+                    models[2].setColor(glm::vec3(1.0f, 0.0f, 0.0f));
                 }
                 break;
             case GLFW_MOUSE_BUTTON_MIDDLE:
@@ -57,7 +57,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
                 spinZ = 0.0f;
                 deltaSpin = originalSpinRate;
                 isPendulumStopped = false;
-                //models[2].setColor(glm::vec3(0.0f, 0.0f, 0.75f)); // Reset to original color
+                models[2].setColor(glm::vec3(0.0f, 0.0f, 0.75f)); // Reset to original color
                 break;
         }
     }
@@ -109,19 +109,19 @@ void setupVertices(void) {
 	shaders.push_back(testS);
 
 	//Model test("models/glb/base.glb");
-	Model base("models/glb/base/base.glb");
+	/*Model base("models/glb/base.glb", glm::vec3{0.75f, 0.0f, 0.75f});
 	base.setPosition(glm::vec3 {0.0f, 0.0f, -1.0f});
 	models.push_back(base);
 	
-	Model support("models/glb/support/support.glb");
+	Model support("models/glb/support.glb", glm::vec3{0.0f, 0.75f, 0.0f});
 	support.setPosition(glm::vec3 {2.0f, 0.0f, -0.5f});
-	models.push_back(support);
+	models.push_back(support);*/
 
-	Model pendulum("models/glb/pendulum/pendulum.glb");
+	Model pendulum("../models/glb/pendulum.glb");
 	pendulum.setPosition(glm::vec3 {0.0f, 0.0f, 3.0f});
 	pendulum.setRotation(glm::vec3{0.0f, 0.0f, 90.0f});
 	pendulum.setScale(glm::vec3{0.6f, 0.6f, 0.6f});
-	models.push_back(pendulum);
+	models.push_back(pendulum);	
 
 }
 
@@ -157,7 +157,7 @@ void display(GLFWwindow* window, double currentTime) {
 	glClearColor(0.0, 0.0, 0.0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	for (int i = 0; i < 2; i++)
+	/*for (int i = 0; i < 2; i++)
 	{
 		
 		//glUseProgram(renderingProgram);
@@ -191,7 +191,7 @@ void display(GLFWwindow* window, double currentTime) {
 
 		models[i].Draw(shaders[0]);
 	}
-	
+	*/
 
 	shaders[0].use();
 
@@ -210,14 +210,14 @@ void display(GLFWwindow* window, double currentTime) {
 
 	
 	
-	mMat = glm::translate(mMat, models[2].position);
-	mMat = glm::scale(mMat, models[2].scale);
+	mMat = glm::translate(mMat, models[0].position);
+	mMat = glm::scale(mMat, models[0].scale);
 
 	mMat = glm::translate(mMat, glm::vec3(0.0f, 0.0f, 0.5f));
 	
-	mMat = glm::rotate(mMat, glm::radians(models[2].rotation.x+spinZ), glm::vec3(1.0f, 0.0f, 0.0f));
-	mMat = glm::rotate(mMat, glm::radians(models[2].rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-	mMat = glm::rotate(mMat, glm::radians(models[2].rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+	mMat = glm::rotate(mMat, glm::radians(models[0].rotation.x+spinZ), glm::vec3(1.0f, 0.0f, 0.0f));
+	mMat = glm::rotate(mMat, glm::radians(models[0].rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+	mMat = glm::rotate(mMat, glm::radians(models[0].rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
 	mMat = glm::translate(mMat, glm::vec3(0.0f, 0.0f, -0.5f));
 	

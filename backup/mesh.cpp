@@ -38,7 +38,7 @@ void Mesh::Draw(Shader &shader)
 
     //cout << indices.size() << endl;
     //cout << vertices.size() << endl;
-    //printf("%d\n", textures.size());
+    printf("%d\n", textures.size());
     for(unsigned int i = 0; i < textures.size(); i++)
     {
         glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
@@ -56,7 +56,13 @@ void Mesh::Draw(Shader &shader)
         
         
         // now set the sampler to the correct texture unit
-        glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
+        
+        GLint location = glGetUniformLocation(shader.ID, (name + number).c_str());
+        if (location == -1) {
+            std::cerr << "Error: Invalid uniform location for " << (name + number) << std::endl;
+            return;
+        }
+        glUniform1i(location, i);
 
         
         // and finally bind the texture
@@ -64,7 +70,7 @@ void Mesh::Draw(Shader &shader)
         
     }
 
-    glBindVertexArray(VAO);
+    glBindVertexArray(VAO[0]);
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -139,19 +145,58 @@ void Mesh::setupMesh(glm::vec3 color)
 
 void Mesh::setupMesh()
 {
+    /*
+    glGenVertexArrays(1, VAO);
+    glBindVertexArray(VAO[0]);
+
     
+    //cout << vertices.size() << endl;
+    //cout << indices.size() << endl;
+    //cout << colors.size() << endl;
+    
+
+    glGenBuffers(2, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+
+    glGenBuffers(1, EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[0]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+
+    
+    // Vertex positions
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) 0);
+    
+    // Vertex normals
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+
+    // Vertex texture coords
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, textureCoords));
+
+    //glEnableVertexAttribArray(3);
+    //glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*) 0);
+    
+    glBindVertexArray(0);
+
+    */
+
     // create buffers/arrays
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
+    glGenVertexArrays(1, VAO);
+    glGenBuffers(1, VBO);
+    glGenBuffers(1, EBO);
 
-    glBindVertexArray(VAO);
+    glBindVertexArray(VAO[0]);
     // load data into vertex buffers
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+    // A great thing about structs is that their memory layout is sequential for all its items.
+    // The effect is that we can simply pass a pointer to the struct and it translates perfectly to a glm::vec3/2 array which
+    // again translates to 3/2 floats which translates to a byte array.
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);  
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[0]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
     // set the vertex attribute pointers
@@ -160,11 +205,33 @@ void Mesh::setupMesh()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
     // vertex normals
     glEnableVertexAttribArray(1);	
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
     // vertex texture coords
     glEnableVertexAttribArray(2);	
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, textureCoords));
+    
 
     glBindVertexArray(0);
+    
+}
 
+void Mesh::setupColor(glm::vec3 color)
+{
+    vector<glm::vec3> colors = fillColors(indices.size(), color);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+	glBufferData(GL_ARRAY_BUFFER, indices.size() * sizeof(glm::vec3), &colors[0], GL_STATIC_DRAW);
+
+}
+
+
+vector<glm::vec3> Mesh::fillColors(int numVerts, glm::vec3 color)
+{
+    vector<glm::vec3> colors(numVerts);
+
+    for (unsigned int i = 0; i < numVerts; i++)
+    {
+        colors[i] = color;
+    }
+    return colors;
 }
