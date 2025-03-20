@@ -1,8 +1,8 @@
 C++ = g++
 CFLAGS = -I./includes/SOIL2
 LDLIBS = -lGL -lGLEW -lglfw -lassimp -L./includes/SOIL2 -lsoil2
-HEADERS = opengl.h structs.h shader.h mesh.h model.h
-OBJS = model.o mesh.o shader.o
+HEADERS = opengl.h globals.h structs.h shader.h mesh.h model.h phaseSpacePlot.h rungeKutta.h
+OBJS = model.o mesh.o shader.o rungeKutta.o phaseSpacePlot.o 
 
 debug ?= n
 ifeq ($(debug), y)
@@ -25,8 +25,14 @@ model.o : model.cpp structs.h shader.h mesh.h model.h
 mesh.o : mesh.cpp structs.h shader.h mesh.h
 	$(C++) $(CFLAGS) mesh.cpp -c
 
-shader.o : shader.cpp  structs.h shader.h
+shader.o : shader.cpp structs.h shader.h
 	$(C++) $(CFLAGS) shader.cpp -c
+
+rungeKutta.o : rungeKutta.cpp structs.h rungeKutta.h
+	$(C++) $(CFLAGS) rungeKutta.cpp -c
+
+phaseSpacePlot.o : phaseSpacePlot.cpp structs.h phaseSpacePlot.h
+	$(C++) $(CFLAGS) phaseSpacePlot.cpp -c
 
 clean:
 	rm -f *.o pen

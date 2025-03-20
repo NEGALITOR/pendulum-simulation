@@ -4,6 +4,7 @@
 #include "opengl.h"
 
 
+
 // ASSIMP INTEGRATION
 
 struct Vertex {
@@ -28,6 +29,13 @@ struct Material
     glm::vec3 diffuse;
     glm::vec3 specular;
     float shininess;
+};
+
+
+struct PendulumState 
+{
+    float theta;      // Angle
+    float theta_dot;  // Angular velocity
 };
 
 
