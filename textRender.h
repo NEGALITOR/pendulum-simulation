@@ -22,7 +22,7 @@ public:
     FT_Face face;
     
     void initTextRenderShaders(int fontSize);
-    void renderText(Shader &shader, std::string text, float x, float y, float scale, glm::vec3 color);
+    void renderText(Shader &shader, std::string text, float x, float y, float scale, glm::vec3 textColor);
     map<char, Character> Characters;
 
 private:

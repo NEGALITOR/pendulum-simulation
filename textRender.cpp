@@ -104,25 +104,17 @@ void TextRender::loadFont(int fontSize)
 }
 
 
-void TextRender::renderText(Shader &shader, std::string text, float x, float y, float scale, glm::vec3 color) 
+void TextRender::renderText(Shader &shader, std::string text, float x, float y, float scale, glm::vec3 textColor) 
 {
-    shader.use();
-
-    // Set up orthographic projection
-    glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(width), 0.0f, static_cast<float>(height));
-    shaders[3].setMat4("projection", projection);
     
-    shader.setVec3("textColor", color);
-    glActiveTexture(GL_TEXTURE0);
-    glBindVertexArray(VAO);
    
     // Get the current window size
     int windowWidth, windowHeight;
     glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
 
     // Define the plot area in the lower right corner (1/4 of the window)
-    int plotWidth = windowWidth / 4;
-    int plotHeight = windowHeight / 4;
+    float plotWidth = windowWidth / 2;
+    float plotHeight = windowHeight / 2;
     int plotX = 10;  // 10 pixel margin
     int plotY = 10;  // 10 pixel margin from bottom
     
@@ -134,6 +126,49 @@ void TextRender::renderText(Shader &shader, std::string text, float x, float y, 
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+
+    shader.use();
+
+    // Set up orthographic projection
+    glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(width), 0.0f, static_cast<float>(height));
+    shaders[3].setMat4("projection", projection);
+    /*
+    // Draw plot background
+    shader.setVec4("textColor", glm::vec4(0.1f, 0.1f, 0.1f, 0.7f));
+    
+    const float thetaRange = 2.0f * M_PI;
+    const float thetaDotRange = 20.0f;
+    float backgroundVertices[] = {
+        0.0f, 0.0f,
+        plotWidth, 0.0f,
+        plotWidth, plotHeight,
+        0.0f, plotHeight
+    };
+    
+    GLuint backgroundVAO, backgroundVBO;
+    glGenVertexArrays(1, &backgroundVAO);
+    glGenBuffers(1, &backgroundVBO);
+    
+    glBindVertexArray(backgroundVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(backgroundVertices), backgroundVertices, GL_STATIC_DRAW);
+    
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    
+    glDeleteVertexArrays(1, &backgroundVAO);
+    glDeleteBuffers(1, &backgroundVBO);
+    */
+    
+    shader.setVec3("textColor", textColor);
+    glActiveTexture(GL_TEXTURE0);
+    glBindVertexArray(VAO);
+
+
+    
 
     // Iterate through all characters
     std::string::const_iterator c;
