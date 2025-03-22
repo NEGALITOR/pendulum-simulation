@@ -3,12 +3,9 @@
 
 
 #include "globals.h"
-#include "prototypes.h"
 #include "structs.h"
 
-#include "model.h"
-#include "shader.h"
-
+#include "phaseSpacePlot.h"
 #include "rungeKutta.h"
 
 using namespace std;
@@ -28,11 +25,11 @@ int width, height;
 float aspect;
 glm::mat4 pMat, vMat, mMat, mvMat, lookAtMat;
 
-vector<Model> models;
-vector<Shader> shaders;
-
 bool isPendulumStopped = false;
 
+vector<Model> models;
+vector<Shader> shaders;
+PhaseSpacePlot plot;
 
 // Mouse callback function
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
@@ -155,10 +152,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 void setupVertices(void) {
 
-	Shader staticShader("vertShader.glsl", "fragShader.glsl");
+	Shader staticShader("shaders/vertShader.glsl", "shaders/fragShader.glsl");
 	shaders.push_back(staticShader);
 
-    Shader pendulumShader("vertShader.glsl", "fragShader.glsl");
+    Shader pendulumShader("shaders/vertShader.glsl", "shaders/fragShader.glsl");
 	shaders.push_back(pendulumShader);
 
 	//Model test("models/glb/base.glb");
@@ -175,6 +172,8 @@ void setupVertices(void) {
 	pendulum.setRotation(glm::vec3{0.0f, 0.0f, 90.0f});
 	pendulum.setScale(glm::vec3{0.6f, 0.6f, 0.6f});
 	models.push_back(pendulum);
+
+    
 
 }
 
@@ -204,7 +203,7 @@ void init(GLFWwindow* window) {
     setupVertices();
 }
 
-// Modify the display function to use RK4 for the pendulum
+
 void display(GLFWwindow* window, double currentTime) {
     static double lastTime = 0.0;
     double deltaTime = currentTime - lastTime;
@@ -289,7 +288,7 @@ void display(GLFWwindow* window, double currentTime) {
 
     models[2].Draw(shaders[1]);
 
-    //renderPhaseSpacePlot(window);
+    plot.renderPhaseSpacePlot(window);
 }
 
 // Modify main function to remove the old spinZ update

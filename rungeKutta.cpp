@@ -7,16 +7,14 @@
 float initialTheta = M_PI/2;
 float u_time = 0.0f;         // Accumulated time
 float u_steps = 0.01f;       // Time step for RK4
-float u_b = 0.0025f; //0.0025f;            // Damping coefficient (b in equation)
+float u_b = 0.00f; //0.0025f;            // Damping coefficient (b in equation)
 float u_g = 9.80665f;           // Gravity (g in equation)
 float u_L = 1.0f;            // Length of pendulum (L in equation)
 float u_theta = initialTheta;      // Current angle (θ)
 float u_theta_dot = 0.0f;    // Current angular velocity (θ̇)
 
-// Period
-static float lastTimeCrossed = 0.0f;
-static bool firstPass = true;
-static bool secondPass = false;
+static float lastZeroCrossTime = -1.0f;
+static float pendulumPeriod = 0.0f;
 
 
 PendulumState derivative(const PendulumState& state) 
@@ -42,6 +40,7 @@ void updatePendulum(float deltaTime) {
     
     // Accumulate time
     u_time += deltaTime;
+    static float previousTheta = u_theta;
     
     // Current state
     PendulumState state = {u_theta, u_theta_dot};
@@ -65,18 +64,23 @@ void updatePendulum(float deltaTime) {
     u_theta += (u_steps / 6.0f) * (k1.theta + 2.0f * k2.theta + 2.0f * k3.theta + k4.theta);
     u_theta_dot += (u_steps / 6.0f) * (k1.theta_dot + 2.0f * k2.theta_dot + 2.0f * k3.theta_dot + k4.theta_dot);
 
-    phaseTrajectory.push_back({u_theta, u_theta_dot});
-    // 
-    // Detect period by checking when θ crosses initial angle (pi/2)
-    if (!secondPass && u_theta_dot > 0) 
-    {
-        if (!firstPass) {
-            float period = u_time - lastTimeCrossed;
-            printf("Measured Period: %.3f seconds\n", period);
-            secondPass = true;
+    
+
+
+    // Detect when pendulum crosses through zero position with positive velocity
+    if (u_theta > 0 && state.theta < 0 && u_theta_dot > 0) {
+        // If we've crossed before, calculate period
+        if (lastZeroCrossTime >= 0) {
+            pendulumPeriod = u_time - lastZeroCrossTime;
+            printf("Current pendulum period: %.4f seconds\n", pendulumPeriod);
         }
-        lastTimeCrossed = u_time;
-        firstPass = false;
+        // Record this crossing time
+        lastZeroCrossTime = u_time;
     }
+
+
+    phaseTrajectory.push_back({u_theta, u_theta_dot});
+
+
 
 }

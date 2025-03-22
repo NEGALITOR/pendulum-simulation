@@ -3,7 +3,11 @@
 
 #include <vector>
 #include <cmath>
+
 #include "opengl.h"
+
+#include "model.h"
+#include "shader.h"
 
 extern bool isPendulumStopped;
 
@@ -18,5 +22,13 @@ extern float u_g;           // Gravity (g in equation)
 extern float u_L;           // Length of pendulum (L in equation)
 extern float u_theta;       // Current angle (θ)
 extern float u_theta_dot;   // Current angular velocity (θ̇)
+
+
+// Add to globals.h
+extern double frameTime;
+extern double frameRate;
+extern bool showProperties;
+
+
 
 #endif
