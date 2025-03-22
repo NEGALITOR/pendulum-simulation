@@ -7,9 +7,9 @@
 
 #include "phaseSpacePlot.h"
 #include "rungeKutta.h"
+#include "textRender.h"
 
-using namespace std;
-
+GLFWwindow* window;
 float cameraX, cameraY, cameraZ;
 float cubeLocX, cubeLocY, cubeLocZ;
 float spinZ, deltaSpin;
@@ -24,12 +24,14 @@ GLuint mvLoc, projLoc, lookAtLoc;
 int width, height;
 float aspect;
 glm::mat4 pMat, vMat, mMat, mvMat, lookAtMat;
+unsigned int frames = 0;
 
 bool isPendulumStopped = false;
 
 vector<Model> models;
 vector<Shader> shaders;
 PhaseSpacePlot plot;
+TextRender textRenderer;
 
 // Mouse callback function
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
@@ -174,7 +176,9 @@ void setupVertices(void) {
 	models.push_back(pendulum);
 
     
+    plot.initPhaseSpaceShaders();
 
+    textRenderer.initTextRenderShaders(50);
 }
 
 // Modify the init function to initialize pendulum parameters
@@ -201,16 +205,31 @@ void init(GLFWwindow* window) {
     glfwSetKeyCallback(window, key_callback);
     
     setupVertices();
+    
+
 }
 
 
 void display(GLFWwindow* window, double currentTime) {
-    static double lastTime = 0.0;
-    double deltaTime = currentTime - lastTime;
-    lastTime = currentTime;
+    static double pendulumLastTime = 0.0;
+    double pendulumDeltaTime = currentTime - pendulumLastTime;
+    pendulumLastTime = currentTime;
+
+    static string fpsText;
+    static double frameLastTime = 0.0;
+    double frameDeltaTime = currentTime - frameLastTime;
+    frames++;
+    
+    if (frameDeltaTime >= 1.0f)
+    {
+        fpsText = "FPS: " + to_string(frames);
+        
+        frames = 0;
+        frameLastTime = currentTime;
+    }
 
     // Update pendulum state using RK4
-    updatePendulum(deltaTime);
+    updatePendulum(pendulumDeltaTime);
 
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
@@ -252,7 +271,7 @@ void display(GLFWwindow* window, double currentTime) {
         models[i].Draw(shaders[0]);
     }
 
-    // Now draw the pendulum with physics
+    // Draw the pendulum
     shaders[1].use();
 
     // Get uniform locations
@@ -271,14 +290,10 @@ void display(GLFWwindow* window, double currentTime) {
     mMat = glm::translate(mMat, models[2].position);
     mMat = glm::scale(mMat, models[2].scale);
 
-    //mMat = glm::translate(mMat, glm::vec3(0.0f, 0.0f, 0.5f));
-
     // Apply rotation based on physics
     mMat = glm::rotate(mMat, u_theta, glm::vec3(1.0f, 0.0f, 0.0f));
 
     mMat = glm::rotate(mMat, glm::radians(models[2].rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-
-    //mMat = glm::translate(mMat, glm::vec3(0.0f, 0.0f, -0.5f));
 
     mvMat = vMat * mMat;
 
@@ -288,15 +303,18 @@ void display(GLFWwindow* window, double currentTime) {
 
     models[2].Draw(shaders[1]);
 
-    plot.renderPhaseSpacePlot(window);
+    plot.renderPhaseSpacePlot(shaders[2]);
+
+    // Render FPS text
+    textRenderer.renderText(shaders[3], fpsText, 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+    
 }
 
-// Modify main function to remove the old spinZ update
 int main(void) {
     if (!glfwInit()) { exit(EXIT_FAILURE); }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    GLFWwindow* window = glfwCreateWindow(600, 600, "Pendulum Simulation", NULL, NULL);
+    window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_WIDTH, "Pendulum Simulation", NULL, NULL);
     glfwMakeContextCurrent(window);
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) { exit(EXIT_FAILURE); }

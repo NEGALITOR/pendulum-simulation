@@ -9,6 +9,12 @@
 #include "model.h"
 #include "shader.h"
 
+extern GLFWwindow* window;
+const GLuint WINDOW_WIDTH = 600;
+extern int width, height;
+
+extern unsigned int frames;
+
 extern bool isPendulumStopped;
 
 extern std::vector<std::pair<float, float>> phaseTrajectory;
@@ -24,11 +30,7 @@ extern float u_theta;       // Current angle (θ)
 extern float u_theta_dot;   // Current angular velocity (θ̇)
 
 
-// Add to globals.h
-extern double frameTime;
-extern double frameRate;
-extern bool showProperties;
-
+extern vector<Shader> shaders;
 
 
 #endif

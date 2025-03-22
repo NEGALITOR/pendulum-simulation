@@ -4,98 +4,17 @@
 
 std::vector<std::pair<float, float>> phaseTrajectory;
 
-// Add these includes at the top of your file
 #include <string>
 #include <iostream>
 
-// Shader compilation and program linking
-GLuint PhaseSpacePlot::createShaderProgram() {
-
-    string vertexCode;
-	string fragmentCode;
-	ifstream vShaderFile;
-	ifstream fShaderFile;
-
-	try
-	{
-		vShaderFile.open("shaders/phaseSpaceVShader.glsl");
-		fShaderFile.open("shaders/phaseSpaceFShader.glsl");
-		stringstream vShaderStream, fShaderstream;
-
-		vShaderStream << vShaderFile.rdbuf();
-		fShaderstream << fShaderFile.rdbuf();
-
-		vShaderFile.close();
-		fShaderFile.close();
-
-		vertexCode = vShaderStream.str();
-		fragmentCode = fShaderstream.str();
-	}
-	catch (ifstream::failure &e)
-	{
-		std::cout << "ERROR::SHADER::FILE_NOT_PROPERLY_READ: " << e.what() << endl;
-	}
-
-	const char* vShaderCode = vertexCode.c_str();
-	const char * fShaderCode = fragmentCode.c_str();
-
-    // Vertex shader
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vShaderCode, NULL);
-    glCompileShader(vertexShader);
-    
-    // Check for shader compile errors
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    
-    // Fragment shader
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fShaderCode, NULL);
-    glCompileShader(fragmentShader);
-    
-    // Check for shader compile errors
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    
-    // Link shaders
-    GLuint shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    
-    // Check for linking errors
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
-    
-    // Delete shaders as they're linked into our program now and no longer necessary
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-    
-    return shaderProgram;
-}
-
-// Global variables for rendering
-GLuint phaseSpaceShader = 0;
-GLuint axesVAO = 0, axesVBO = 0;
-GLuint gridVAO = 0, gridVBO = 0;
-GLuint trajectoryVAO = 0, trajectoryVBO = 0;
-bool shadersInitialized = false;
+GLuint axesVAO, axesVBO;
+GLuint gridVAO, gridVBO;
+GLuint trajectoryVAO, trajectoryVBO;
 
 // Initialize the shader program and buffers
-void PhaseSpacePlot::initPhaseSpaceShaders() {
-    // Create shader program
-    phaseSpaceShader = createShaderProgram();
+void PhaseSpacePlot::initPhaseSpaceShaders() 
+{
+    Shader phaseSpaceShader("shaders/phaseSpaceVShader.glsl", "shaders/phaseSpaceFShader.glsl");
     
     // Create VAO and VBO for axes
     float axesVertices[] = {
@@ -165,35 +84,25 @@ void PhaseSpacePlot::initPhaseSpaceShaders() {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     
-    shadersInitialized = true;
+    shaders.push_back(phaseSpaceShader);
 }
 
 // Clean up the shader resources
-void PhaseSpacePlot::cleanupPhaseSpaceShaders() {
-    if (shadersInitialized) {
-        glDeleteProgram(phaseSpaceShader);
-        glDeleteVertexArrays(1, &axesVAO);
-        glDeleteBuffers(1, &axesVBO);
-        glDeleteVertexArrays(1, &gridVAO);
-        glDeleteBuffers(1, &gridVBO);
-        glDeleteVertexArrays(1, &trajectoryVAO);
-        glDeleteBuffers(1, &trajectoryVBO);
-        shadersInitialized = false;
-    }
+void PhaseSpacePlot::cleanupPhaseSpaceShaders(Shader phaseSpaceShader) 
+{
+    glDeleteProgram(phaseSpaceShader.getID());
+    glDeleteVertexArrays(1, &axesVAO);
+    glDeleteBuffers(1, &axesVBO);
+    glDeleteVertexArrays(1, &gridVAO);
+    glDeleteBuffers(1, &gridVBO);
+    glDeleteVertexArrays(1, &trajectoryVAO);
+    glDeleteBuffers(1, &trajectoryVBO);
 }
 
-// Helper function to set a uniform matrix in the shader
-void PhaseSpacePlot::setMat4(GLuint shader, const char* name, const glm::mat4& mat) {
-    glUniformMatrix4fv(glGetUniformLocation(shader, name), 1, GL_FALSE, glm::value_ptr(mat));
-}
-
-// Helper function to set a uniform vector in the shader
-void PhaseSpacePlot::setVec4(GLuint shader, const char* name, const glm::vec4& value) {
-    glUniform4fv(glGetUniformLocation(shader, name), 1, glm::value_ptr(value));
-}
 
 // Update the trajectory buffer with the latest phase space points
-void PhaseSpacePlot::updateTrajectoryBuffer() {
+void PhaseSpacePlot::updateTrajectoryBuffer() 
+{
     if (!phaseTrajectory.empty()) {
         std::vector<float> trajectoryVertices;
         trajectoryVertices.reserve(phaseTrajectory.size() * 2);
@@ -210,11 +119,8 @@ void PhaseSpacePlot::updateTrajectoryBuffer() {
 }
 
 // Render the phase space plot using shaders
-void PhaseSpacePlot::renderPhaseSpacePlot(GLFWwindow* window) {
-    // Initialize shaders if not already done
-    if (!shadersInitialized) {
-        initPhaseSpaceShaders();
-    }
+void PhaseSpacePlot::renderPhaseSpacePlot(Shader phaseSpaceShader) 
+{
     
     // Get the current window size
     int windowWidth, windowHeight;
@@ -238,7 +144,7 @@ void PhaseSpacePlot::renderPhaseSpacePlot(GLFWwindow* window) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     // Use our shader program
-    glUseProgram(phaseSpaceShader);
+    phaseSpaceShader.use();
     
     // Create projection matrix (orthographic)
     const float thetaRange = 2.0f * M_PI;
@@ -246,11 +152,11 @@ void PhaseSpacePlot::renderPhaseSpacePlot(GLFWwindow* window) {
     glm::mat4 projection = glm::ortho(-thetaRange/2, thetaRange/2, -thetaDotRange/2, thetaDotRange/2, -1.0f, 1.0f);
     
     // Set the projection matrix in the shader
-    setMat4(phaseSpaceShader, "projection", projection);
-    setMat4(phaseSpaceShader, "model", glm::mat4(1.0f)); // Identity model matrix
+    phaseSpaceShader.setMat4("projection", projection);
+    phaseSpaceShader.setMat4("model", glm::mat4(1.0f));
     
     // Draw plot background
-    setVec4(phaseSpaceShader, "color", glm::vec4(0.1f, 0.1f, 0.1f, 0.7f));
+    phaseSpaceShader.setVec4("color", glm::vec4(0.1f, 0.1f, 0.1f, 0.7f));
     
     float backgroundVertices[] = {
         -thetaRange/2, -thetaDotRange/2,
@@ -276,12 +182,12 @@ void PhaseSpacePlot::renderPhaseSpacePlot(GLFWwindow* window) {
     glDeleteBuffers(1, &backgroundVBO);
     
     // Draw grid
-    setVec4(phaseSpaceShader, "color", glm::vec4(0.3f, 0.3f, 0.3f, 1.0f));
+    phaseSpaceShader.setVec4("color", glm::vec4(0.3f, 0.3f, 0.3f, 1.0f));
     glBindVertexArray(gridVAO);
     glDrawArrays(GL_LINES, 0, 20); // Adjust the count based on your grid lines
     
     // Draw axes
-    setVec4(phaseSpaceShader, "color", glm::vec4(0.5f, 0.5f, 0.5f, 1.0f));
+    phaseSpaceShader.setVec4("color", glm::vec4(0.5f, 0.5f, 0.5f, 1.0f));
     glBindVertexArray(axesVAO);
     glDrawArrays(GL_LINES, 0, 4); // 2 lines (X and Y axes) with 2 points each
     
@@ -290,13 +196,13 @@ void PhaseSpacePlot::renderPhaseSpacePlot(GLFWwindow* window) {
         updateTrajectoryBuffer();
         
         // Draw trajectory line
-        setVec4(phaseSpaceShader, "color", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+        phaseSpaceShader.setVec4("color", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
         glBindVertexArray(trajectoryVAO);
         glDrawArrays(GL_LINE_STRIP, 0, phaseTrajectory.size());
         
         // Draw current point as a larger dot
         glPointSize(5.0f);
-        setVec4(phaseSpaceShader, "color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+        phaseSpaceShader.setVec4("color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
         glDrawArrays(GL_POINTS, phaseTrajectory.size() - 1, 1);
         glPointSize(1.0f);
     }

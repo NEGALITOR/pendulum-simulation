@@ -6,6 +6,7 @@
 #include <fstream>
 #include <sstream>
 
+Shader::Shader() {}
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath)
 {
@@ -63,6 +64,12 @@ void Shader::use()
 {
 	glUseProgram(ID); 
 }
+
+GLuint Shader::getID()
+{
+	return ID;
+}
+
 // utility uniform functions
 // ------------------------------------------------------------------------
 void Shader::setBool(const std::string &name, bool value) const

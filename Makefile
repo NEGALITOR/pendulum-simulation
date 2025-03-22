@@ -2,7 +2,7 @@ C++ = g++
 CFLAGS = -I./includes/SOIL2 -I/usr/include/freetype2/
 LDLIBS = -lGL -lGLEW -lglfw -lassimp -L./includes/SOIL2 -lsoil2 -lfreetype
 HEADERS = opengl.h globals.h structs.h shader.h mesh.h model.h phaseSpacePlot.h rungeKutta.h textRender.h
-OBJS = model.o mesh.o shader.o rungeKutta.o phaseSpacePlot.o 
+OBJS = model.o mesh.o shader.o rungeKutta.o phaseSpacePlot.o textRender.o
 
 debug ?= n
 ifeq ($(debug), y)
