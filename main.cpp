@@ -332,7 +332,6 @@ int main(int argc, char* argv[])
     if (glewInit() != GLEW_OK) { exit(EXIT_FAILURE); }
     //glfwSwapInterval(1);
     
-
     if (argc > 1)
     {
         //cout << argv[1] << endl;
