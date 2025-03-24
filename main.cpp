@@ -7,7 +7,6 @@
 
 #include "phaseSpacePlot.h"
 #include "rungeKutta.h"
-#include "textRender.h"
 
 GLFWwindow* window;
 float cameraX, cameraY, cameraZ;
@@ -57,13 +56,12 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
                 //deltaSpin = originalSpinRate;
                 isPendulumStopped = false;
 
-
                 u_time = 0.0f;         // Accumulated time
-                u_steps = 0.01f;       // Time step for RK4
-                u_b = 0.1f;            // Damping coefficient (b in equation)
-                u_g = 9.81f;           // Gravity (g in equation)
-                u_L = 1.0f;            // Length of pendulum (L in equation)
-                u_theta = M_PI/2;      // Current angle (θ)
+                u_steps = 0.00f;       // Base time step for RK4
+                u_b = user_b;            // Damping coefficient (b in equation)
+                u_g = user_g;           // Gravity (g in equation)
+                u_L = user_L;            // Length of pendulum (L in equation)
+                u_theta = initialTheta;      // Current angle (θ)
                 u_theta_dot = 0.0f;    // Current angular velocity (θ̇)
 
                 //models[2].setColor(glm::vec3(0.0f, 0.0f, 0.75f)); // Reset to original color
@@ -197,8 +195,6 @@ void init(GLFWwindow* window) {
     
     // Initialize pendulum variables
     u_time = 0.0f;
-    u_theta = M_PI/2;  // Initial angle (45 degrees)
-    u_theta_dot = 0.0f; // Initial angular velocity
     
     // Set up callbacks
     glfwSetMouseButtonCallback(window, mouse_button_callback);
@@ -211,25 +207,12 @@ void init(GLFWwindow* window) {
 
 
 void display(GLFWwindow* window, double currentTime) {
-    static double pendulumLastTime = 0.0;
-    double pendulumDeltaTime = currentTime - pendulumLastTime;
-    pendulumLastTime = currentTime;
 
-    static string fpsText;
-    static double frameLastTime = 0.0;
-    double frameDeltaTime = currentTime - frameLastTime;
-    frames++;
+    static double lastTime = 0.0;
+    double deltaTime = currentTime - lastTime;
+    lastTime = currentTime;
     
-    if (frameDeltaTime >= 1.0f)
-    {
-        fpsText = "FPS: " + to_string(frames);
-        
-        frames = 0;
-        frameLastTime = currentTime;
-    }
-
-    // Update pendulum state using RK4
-    updatePendulum(pendulumDeltaTime);
+    updatePendulum(deltaTime);
 
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
@@ -306,11 +289,40 @@ void display(GLFWwindow* window, double currentTime) {
     plot.renderPhaseSpacePlot(shaders[2]);
 
     // Render FPS text
+    static string fpsText = "FPS: ";
+    static double frameLastTime = 0.0;
+    double frameDeltaTime = currentTime - frameLastTime;
+    frames++;
+    
+    if (frameDeltaTime >= 1.0f)
+    {
+        fpsText = "FPS: " + to_string(frames);
+        
+        frames = 0;
+        frameLastTime = currentTime;
+    }
     textRenderer.renderText(shaders[3], fpsText, 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
     
+    // Display the period on screen
+    string periodText = "Period: ";
+    if (pendulumPeriod > 0.0f)
+    {
+        periodText = "Period: " + to_string(pendulumPeriod).substr(0, 5) + " s";
+    }
+    textRenderer.renderText(shaders[3], periodText, 25.0f, 75.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+
+    string angleText = "Angle: " + to_string(glm::degrees(u_theta)).substr(0, 6);
+    textRenderer.renderText(shaders[3], angleText, 25.0f, 125.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+    string dampText = "Damp: " + to_string(u_b).substr(0, 4);
+    textRenderer.renderText(shaders[3], dampText, 25.0f, 175.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+    string lengthText = "Length: " + to_string(u_L).substr(0, 4);
+    textRenderer.renderText(shaders[3], lengthText, 25.0f, 225.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
+    string gravityText = "Gravity: " + to_string(u_g).substr(0, 4); 
+    textRenderer.renderText(shaders[3], gravityText, 25.0f, 275.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
 }
 
-int main(void) {
+int main(int argc, char* argv[]) 
+{
     if (!glfwInit()) { exit(EXIT_FAILURE); }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -318,7 +330,31 @@ int main(void) {
     glfwMakeContextCurrent(window);
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) { exit(EXIT_FAILURE); }
-    glfwSwapInterval(1);
+    //glfwSwapInterval(1);
+    
+
+    if (argc > 1)
+    {
+        //cout << argv[1] << endl;
+        float angle = atof(argv[1]);
+        if (angle <= 180 && angle >= 0)
+            initialTheta = glm::radians(angle);
+    }
+    if (argc > 2)
+    {
+        user_b = atof(argv[2]);
+        u_b = user_b;
+    }
+    if (argc > 3)
+    {
+        user_L = atof(argv[3]);
+        u_L = user_L;
+    }
+    if (argc > 4)
+    {
+        user_g = atof(argv[4]);
+        u_g = user_g;
+    }
 
     init(window);
 

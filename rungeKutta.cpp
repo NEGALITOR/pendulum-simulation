@@ -7,15 +7,18 @@
 float initialTheta = M_PI/2;
 float u_time = 0.0f;         // Accumulated time
 float u_steps = 0.01f;       // Base time step for RK4
-float u_b = 0.00f; //0.0025f;            // Damping coefficient (b in equation)
-float u_g = 9.80665f;           // Gravity (g in equation)
+float u_b = 0.0025f;         // Damping coefficient (b in equation)
+float u_g = 9.80665f;        // Gravity (g in equation)
 float u_L = 1.0f;            // Length of pendulum (L in equation)
-float u_theta = initialTheta;      // Current angle (θ)
-float u_theta_dot = 0.0f;    // Current angular velocity (θ̇)
+float u_theta = initialTheta;// Current angle (θ)
+float u_theta_dot = 0.0f;    // Current angular velocity
 
-static float lastZeroCrossTime = -1.0f;
-static float pendulumPeriod = 0.0f;
-static float prevTheta = initialTheta;   // Store previous theta value
+float user_b = u_b;
+float user_L = u_L;
+float user_g = u_g;
+
+static float lastZeroCrossTime = 0.0f;
+float pendulumPeriod = 0.0f;
 
 PendulumState derivative(const PendulumState& state) 
 {
@@ -40,9 +43,8 @@ void updatePendulum(float deltaTime) {
     
     // Accumulate time
     u_time += deltaTime;
-    
-    // Store previous state
-    prevTheta = u_theta;
+
+    u_steps = deltaTime;
     
     // Current state
     PendulumState state = {u_theta, u_theta_dot};
@@ -66,19 +68,22 @@ void updatePendulum(float deltaTime) {
     u_theta += (u_steps / 6.0f) * (k1.theta + 2.0f * k2.theta + 2.0f * k3.theta + k4.theta);
     u_theta_dot += (u_steps / 6.0f) * (k1.theta_dot + 2.0f * k2.theta_dot + 2.0f * k3.theta_dot + k4.theta_dot);
 
-    // Add to phase trajectory
-    phaseTrajectory.push_back({u_theta, u_theta_dot});
+    
     
     if (state.theta_dot > 0 && u_theta_dot < 0)
     {
         // If we've crossed before, calculate period
         if (lastZeroCrossTime >= 0) {
             pendulumPeriod = u_time - lastZeroCrossTime;
-            printf("Current pendulum period: %.4f seconds\n", pendulumPeriod);
+            //printf("Current pendulum period: %.4f seconds\n", pendulumPeriod);
+            
         }
         // Record crossing time
         lastZeroCrossTime = u_time;
     }
 
+    // Add to phase trajectory
+    phaseTrajectory.push_back({u_theta, u_theta_dot});
 
 }
+
