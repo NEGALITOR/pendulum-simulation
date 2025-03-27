@@ -1,8 +1,9 @@
 C++ = g++
-CFLAGS = -I./includes/SOIL2 -I/usr/include/freetype2/
-LDLIBS = -lGL -lGLEW -lglfw -lassimp -L./includes/SOIL2 -lsoil2 -lfreetype
+CFLAGS = -I/usr/include/freetype2/
+LDLIBS = -lGL -lGLEW -lglfw -lassimp -lfreetype
 HEADERS = opengl.h globals.h structs.h shader.h mesh.h model.h phaseSpacePlot.h rungeKutta.h textRender.h
 OBJS = model.o mesh.o shader.o rungeKutta.o phaseSpacePlot.o textRender.o
+soil = ./includes/SOIL2/libsoil2.a
 
 debug ?= n
 ifeq ($(debug), y)
@@ -14,10 +15,10 @@ endif
 all: pendulum
 
 pendulum :	main.o $(OBJS) 
-	$(C++) $(CFLAGS) main.o $(OBJS) -o pen $(LDLIBS)
+	$(C++) $(CFLAGS) main.o $(OBJS) -o pen $(LDLIBS) $(soil)
 
 main.o : main.cpp $(HEADERS)
-	$(C++) $(CFLAGS) main.cpp -c
+	$(C++) $(CFLAGS) main.cpp -c $(soil)
 
 model.o : model.cpp structs.h shader.h mesh.h model.h
 	$(C++) $(CFLAGS) model.cpp -c
