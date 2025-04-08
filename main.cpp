@@ -179,7 +179,6 @@ void setupVertices(void) {
     textRenderer.initTextRenderShaders(50);
 }
 
-// Modify the init function to initialize pendulum parameters
 void init(GLFWwindow* window) {
     //renderingProgram = createShaderProgram();
     // These are the camera positions and cube locations.
