@@ -39,7 +39,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
             case GLFW_MOUSE_BUTTON_RIGHT:
                 //deltaSpin += 0.5f; // Increase rotation speed
                 isPendulumStopped = true;
-                //models[2].setColor(glm::vec3(0.0f, 0.0f, 0.75f));
+                //models[3].setColor(glm::vec3(0.0f, 0.0f, 0.75f));
                 break;
             case GLFW_MOUSE_BUTTON_LEFT:
                 //deltaSpin -= 0.5f; // Decrease rotation speed
@@ -47,7 +47,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
                 isPendulumStopped = false;
                 //deltaSpin = 0.0f;
                 // Change pendulum color to red when stopped
-                //models[2].setColor(glm::vec3(1.0f, 0.0f, 0.0f));
+                //models[3].setColor(glm::vec3(1.0f, 0.0f, 0.0f));
 
                 break;
             case GLFW_MOUSE_BUTTON_MIDDLE:
@@ -64,7 +64,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
                 u_theta = initialTheta;      // Current angle (θ)
                 u_theta_dot = 0.0f;    // Current angular velocity (θ̇)
 
-                //models[2].setColor(glm::vec3(0.0f, 0.0f, 0.75f)); // Reset to original color
+                //models[3].setColor(glm::vec3(0.0f, 0.0f, 0.75f)); // Reset to original color
                 break;
         }
     }
@@ -158,6 +158,11 @@ void setupVertices(void) {
     Shader pendulumShader("shaders/vertShader.glsl", "shaders/fragShader.glsl");
 	shaders.push_back(pendulumShader);
 
+    Model room("models/glb/room/room.glb");
+	room.setPosition(glm::vec3 {0.0f, -2.0f, -12.0f});
+    room.setRotation(glm::vec3{0.0f, 0.0f, -35.0f});
+	models.push_back(room);
+
 	//Model test("models/glb/base.glb");
 	Model base("models/glb/base/base.glb");
 	base.setPosition(glm::vec3 {0.0f, 0.0f, -1.0f});
@@ -223,7 +228,7 @@ void display(GLFWwindow* window, double currentTime) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Draw base and support first
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 3; i++) {
         shaders[0].use();
 
         // Get uniform locations
@@ -250,6 +255,14 @@ void display(GLFWwindow* window, double currentTime) {
         shaders[0].setMat4("proj_matrix", pMat);
         shaders[0].setMat4("lookAt_matrix", lookAtMat);
 
+        // Add lighting uniforms
+        shaders[0].setVec3("viewPos", glm::vec3(cameraX, cameraY, cameraZ));
+        shaders[0].setVec3("lightPos", glm::vec3(0.0f, 0.0f, 5.0f));  // Adjust as needed
+        shaders[0].setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+        shaders[0].setFloat("ambientStrength", 0.3f);
+        shaders[0].setFloat("specularStrength", 0.5f);
+        shaders[0].setFloat("shininess", 32.0f);
+
         models[i].Draw(shaders[0]);
     }
 
@@ -269,13 +282,13 @@ void display(GLFWwindow* window, double currentTime) {
 
     
     mMat = glm::mat4(1.0f);
-    mMat = glm::translate(mMat, models[2].position);
-    mMat = glm::scale(mMat, models[2].scale);
+    mMat = glm::translate(mMat, models[3].position);
+    mMat = glm::scale(mMat, models[3].scale);
 
     // Apply rotation based on physics
     mMat = glm::rotate(mMat, u_theta, glm::vec3(1.0f, 0.0f, 0.0f));
 
-    mMat = glm::rotate(mMat, glm::radians(models[2].rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+    mMat = glm::rotate(mMat, glm::radians(models[3].rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
     mvMat = vMat * mMat;
 
@@ -283,7 +296,15 @@ void display(GLFWwindow* window, double currentTime) {
     shaders[1].setMat4("proj_matrix", pMat);
     shaders[1].setMat4("lookAt_matrix", lookAtMat);
 
-    models[2].Draw(shaders[1]);
+    // Add lighting uniforms
+    shaders[0].setVec3("viewPos", glm::vec3(cameraX, cameraY, cameraZ));
+    shaders[0].setVec3("lightPos", glm::vec3(0.0f, 0.0f, 5.0f));  // Adjust as needed
+    shaders[0].setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+    shaders[0].setFloat("ambientStrength", 0.3f);
+    shaders[0].setFloat("specularStrength", 0.5f);
+    shaders[0].setFloat("shininess", 32.0f);
+
+    models[3].Draw(shaders[1]);
 
     plot.renderPhaseSpacePlot(shaders[2]);
 

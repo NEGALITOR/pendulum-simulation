@@ -20,14 +20,17 @@ pendulum :	main.o $(OBJS)
 main.o : main.cpp $(HEADERS)
 	$(C++) $(CFLAGS) main.cpp -c $(soil)
 
+shader.o : shader.cpp structs.h shader.h
+	$(C++) $(CFLAGS) shader.cpp -c
+
 model.o : model.cpp structs.h shader.h mesh.h model.h
 	$(C++) $(CFLAGS) model.cpp -c
 
 mesh.o : mesh.cpp structs.h shader.h mesh.h
 	$(C++) $(CFLAGS) mesh.cpp -c
 
-shader.o : shader.cpp structs.h shader.h
-	$(C++) $(CFLAGS) shader.cpp -c
+light.o : light.cpp structs.h
+	$(C++) $(CFLAGS) light.cpp -c
 
 rungeKutta.o : rungeKutta.cpp globals.h structs.h rungeKutta.h
 	$(C++) $(CFLAGS) rungeKutta.cpp -c
