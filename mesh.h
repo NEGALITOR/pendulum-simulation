@@ -9,20 +9,17 @@
 class Mesh
 {
     public:
-        GLuint VAO[1], VBO[2], EBO[0];
         vector<Vertex> vertices;
         vector<unsigned int> indices;
         vector<Texture> textures;
 
+        unsigned int VAO, VBO, EBO;
+
         Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures);
-        Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures, glm::vec3 color);
         void Draw(Shader &shader);
-        void setupColor(glm::vec3 color);
-        
 
     private:
-        void setupMesh(glm::vec3 color);
-        vector<glm::vec3> fillColors(int numVerts, glm::vec3 color);
+        void setupMesh();
 };
 
 #endif
