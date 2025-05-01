@@ -6,6 +6,7 @@
 #include <fstream>
 #include <sstream>
 
+Shader::Shader() {}
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath)
 {
@@ -59,10 +60,21 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
 	glDeleteShader(fragment);
 }
 
+void Shader::deleteProgram()
+{
+	glDeleteProgram(ID);
+}
+
 void Shader::use() 
 {
 	glUseProgram(ID); 
 }
+
+GLuint Shader::getID()
+{
+	return ID;
+}
+
 // utility uniform functions
 // ------------------------------------------------------------------------
 void Shader::setBool(const std::string &name, bool value) const

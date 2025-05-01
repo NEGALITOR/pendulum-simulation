@@ -12,7 +12,6 @@
 #include <glm/gtc/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale, glm::perspective
 
 #include <iostream>
-
 using namespace std;
 
 #endif
