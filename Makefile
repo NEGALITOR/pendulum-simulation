@@ -1,8 +1,8 @@
 C++ = g++
 CFLAGS = -I/usr/include/freetype2/
 LDLIBS = -lGL -lGLEW -lglfw -lassimp -lfreetype
-HEADERS = opengl.h globals.h structs.h shader.h mesh.h model.h phaseSpacePlot.h rungeKutta.h textRender.h
-OBJS = model.o mesh.o shader.o rungeKutta.o phaseSpacePlot.o textRender.o
+HEADERS = opengl.h globals.h structs.h shader.h mesh.h model.h phaseSpacePlot.h rungeKutta.h textRender.h light.h
+OBJS = model.o mesh.o shader.o rungeKutta.o phaseSpacePlot.o textRender.o light.o
 soil = ./includes/SOIL2/libsoil2.a
 
 debug ?= n
@@ -29,7 +29,7 @@ model.o : model.cpp structs.h shader.h mesh.h model.h
 mesh.o : mesh.cpp structs.h shader.h mesh.h
 	$(C++) $(CFLAGS) mesh.cpp -c
 
-light.o : light.cpp structs.h
+light.o : light.cpp light.h shader.h
 	$(C++) $(CFLAGS) light.cpp -c
 
 rungeKutta.o : rungeKutta.cpp globals.h structs.h rungeKutta.h

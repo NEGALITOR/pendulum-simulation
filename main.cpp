@@ -8,6 +8,8 @@
 #include "phaseSpacePlot.h"
 #include "rungeKutta.h"
 
+#include "light.h"
+
 GLFWwindow* window;
 float cameraX, cameraY, cameraZ;
 float cubeLocX, cubeLocY, cubeLocZ;
@@ -31,6 +33,9 @@ vector<Model> models;
 vector<Shader> shaders;
 PhaseSpacePlot plot;
 TextRender textRenderer;
+
+// Add to globals section
+LightManager lightManager;
 
 // Mouse callback function
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
@@ -163,6 +168,34 @@ void setupVertices(void) {
     room.setRotation(glm::vec3{0.0f, 0.0f, -35.0f});
 	models.push_back(room);
 
+    Model table("models/glb/table/table.glb");
+	table.setPosition(glm::vec3 {0.0f, -2.0f, -12.0f});
+    table.setRotation(glm::vec3{0.0f, 0.0f, -35.0f});
+	models.push_back(table);
+    
+    Model chair("models/glb/chair/chair.glb");
+	chair.setPosition(glm::vec3 {0.0f, -2.0f, -12.0f});
+    chair.setRotation(glm::vec3{0.0f, 0.0f, -35.0f});
+	models.push_back(chair);
+    
+    Model trash("models/glb/trash/trash.glb");
+	trash.setPosition(glm::vec3 {0.0f, -2.0f, -12.0f});
+    trash.setRotation(glm::vec3{0.0f, 0.0f, -35.0f});
+	models.push_back(trash);
+
+    Model whiteboard("models/glb/whiteboard/whiteboard.glb");
+	whiteboard.setPosition(glm::vec3 {0.0f, -2.0f, -12.0f});
+    whiteboard.setRotation(glm::vec3{0.0f, 0.0f, -35.0f});
+	models.push_back(whiteboard);
+
+    Model lamp("models/glb/lamp/lamp.glb");
+    lamp.setPosition(glm::vec3 {7.0f, -3.0f, -1.5f});
+    models.push_back(lamp);
+
+    Model rooflamp("models/glb/rooflamp/rooflamp.glb");
+    rooflamp.setPosition(glm::vec3 {0.0f, 0.0f, 25.0f});
+    models.push_back(rooflamp);
+
 	//Model test("models/glb/base.glb");
 	Model base("models/glb/base/base.glb");
 	base.setPosition(glm::vec3 {0.0f, 0.0f, -1.0f});
@@ -182,6 +215,38 @@ void setupVertices(void) {
     plot.initPhaseSpaceShaders();
 
     textRenderer.initTextRenderShaders(50);
+
+    // Set up lights with custom parameters
+    Light lampLight(
+        glm::vec3(7.0f, -3.0f, 3.0f),     // position
+        glm::vec3(1.0f, 0.9f, 0.8f),      // color (warm)
+        0.6f,                             // intensity
+        0.1f,                             // ambient strength
+        0.1f,                             // specular strength
+        0.2f                             // shininess
+    );
+
+    Light roofLampLight(
+        glm::vec3(0.0f, 0.0f, 10.0f),     // position
+        glm::vec3(0.8f, 0.8f, 1.0f),      // color (cool)
+        0.5f,                             // intensity
+        0.01f,                             // ambient strength
+        0.5f,                             // specular strength
+        0.2f                             // shininess
+    );
+
+    Light ambientLight(
+        glm::vec3(0.0f, 0.0f, 0.0f),      // position (doesn't matter for ambient)
+        glm::vec3(0.2f, 0.2f, 0.3f),      // color (slight blue tint)
+        0.5f,                             // intensity
+        0.2f,                             // ambient strength
+        0.0f,                             // specular strength
+        0.2f                              // shininess
+    );
+
+    lightManager.addLight(lampLight);
+    //lightManager.addLight(roofLampLight);
+    lightManager.addLight(ambientLight);
 }
 
 void init(GLFWwindow* window) {
@@ -227,8 +292,9 @@ void display(GLFWwindow* window, double currentTime) {
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    int i;
     // Draw base and support first
-    for (int i = 0; i < 3; i++) {
+    for (i = 0; i < models.size()-1; i++) {
         shaders[0].use();
 
         // Get uniform locations
@@ -255,16 +321,11 @@ void display(GLFWwindow* window, double currentTime) {
         shaders[0].setMat4("proj_matrix", pMat);
         shaders[0].setMat4("lookAt_matrix", lookAtMat);
 
-        // Add lighting uniforms
-        shaders[0].setVec3("viewPos", glm::vec3(cameraX, cameraY, cameraZ));
-        shaders[0].setVec3("lightPos", glm::vec3(0.0f, 0.0f, 5.0f));  // Adjust as needed
-        shaders[0].setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
-        shaders[0].setFloat("ambientStrength", 0.3f);
-        shaders[0].setFloat("specularStrength", 0.5f);
-        shaders[0].setFloat("shininess", 32.0f);
-
+        lightManager.applyLights(shaders[0], glm::vec3(cameraX, cameraY, cameraZ));
+        
         models[i].Draw(shaders[0]);
     }
+    //printf("%d\n", i);
 
     // Draw the pendulum
     shaders[1].use();
@@ -282,13 +343,13 @@ void display(GLFWwindow* window, double currentTime) {
 
     
     mMat = glm::mat4(1.0f);
-    mMat = glm::translate(mMat, models[3].position);
-    mMat = glm::scale(mMat, models[3].scale);
+    mMat = glm::translate(mMat, models[i].position);
+    mMat = glm::scale(mMat, models[i].scale);
 
     // Apply rotation based on physics
     mMat = glm::rotate(mMat, u_theta, glm::vec3(1.0f, 0.0f, 0.0f));
 
-    mMat = glm::rotate(mMat, glm::radians(models[3].rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+    mMat = glm::rotate(mMat, glm::radians(models[i].rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
     mvMat = vMat * mMat;
 
@@ -296,15 +357,9 @@ void display(GLFWwindow* window, double currentTime) {
     shaders[1].setMat4("proj_matrix", pMat);
     shaders[1].setMat4("lookAt_matrix", lookAtMat);
 
-    // Add lighting uniforms
-    shaders[0].setVec3("viewPos", glm::vec3(cameraX, cameraY, cameraZ));
-    shaders[0].setVec3("lightPos", glm::vec3(0.0f, 0.0f, 5.0f));  // Adjust as needed
-    shaders[0].setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
-    shaders[0].setFloat("ambientStrength", 0.3f);
-    shaders[0].setFloat("specularStrength", 0.5f);
-    shaders[0].setFloat("shininess", 32.0f);
+    lightManager.applyLights(shaders[1], glm::vec3(cameraX, cameraY, cameraZ));
 
-    models[3].Draw(shaders[1]);
+    models[i].Draw(shaders[1]);
 
     plot.renderPhaseSpacePlot(shaders[2]);
 

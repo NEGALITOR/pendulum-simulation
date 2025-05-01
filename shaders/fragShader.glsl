@@ -8,33 +8,54 @@ out vec4 FragColor;
 
 uniform sampler2D texture_diffuse1;
 
-// Lighting uniforms
-uniform vec3 lightPos = vec3(5.0, 5.0, 5.0);  // Default light position
-uniform vec3 viewPos;  // Camera position
-uniform vec3 lightColor = vec3(1.0, 1.0, 1.0);  // White light
+// Define a light struct
+struct Light {
+    vec3 position;
+    vec3 color;
+    float intensity;
+};
+
+// Support up to 8 lights
+#define MAX_LIGHTS 8
+uniform Light lights[MAX_LIGHTS];
+uniform int numLights;
+uniform vec3 viewPos;
+
+// Global lighting parameters
 uniform float ambientStrength = 0.1;
 uniform float specularStrength = 0.5;
 uniform float shininess = 32.0;
 
 void main(void)
 {
-    // Ambient
-    vec3 ambient = ambientStrength * lightColor;
-
-    // Diffuse
+    // Ambient base lighting
+    vec3 ambient = ambientStrength * vec3(1.0, 1.0, 1.0);
+    
+    // Combined lighting from all sources
+    vec3 lighting = ambient;
     vec3 norm = normalize(Normal);
-    vec3 lightDir = normalize(lightPos - FragPos);
-    float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = diff * lightColor;
-
-    // Specular
     vec3 viewDir = normalize(viewPos - FragPos);
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
-    vec3 specular = specularStrength * spec * lightColor;
-
-    // Combine results
+    
+    // Process each light
+    for(int i = 0; i < numLights && i < MAX_LIGHTS; i++) {
+        // Diffuse
+        vec3 lightDir = normalize(lights[i].position - FragPos);
+        float diff = max(dot(norm, lightDir), 0.0);
+        vec3 diffuse = diff * lights[i].color * lights[i].intensity;
+        
+        // Specular
+        vec3 reflectDir = reflect(-lightDir, norm);
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+        vec3 specular = specularStrength * spec * lights[i].color * lights[i].intensity;
+        
+        // Add this light's contribution
+        lighting += diffuse + specular;
+    }
+    
+    // Apply lighting to texture
     vec4 texColor = texture(texture_diffuse1, TexCoords);
-    vec3 result = (ambient + diffuse + specular) * texColor.rgb;
+    if(texColor.a < 0.1)
+        discard;
+    vec3 result = lighting * texColor.rgb;
     FragColor = vec4(result, texColor.a);
 }
