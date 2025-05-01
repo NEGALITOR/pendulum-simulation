@@ -219,7 +219,7 @@ void setupVertices(void) {
     // Set up lights with custom parameters
     Light lampLight(
         glm::vec3(7.0f, -3.0f, 3.0f),     // position
-        glm::vec3(1.0f, 0.9f, 0.8f),      // color (warm)
+        glm::vec3(1.0f, 0.9f, 0.8f),      // diffuse color 
         0.6f,                             // intensity
         0.1f,                             // ambient strength
         0.1f,                             // specular strength
@@ -228,16 +228,16 @@ void setupVertices(void) {
 
     Light roofLampLight(
         glm::vec3(0.0f, 0.0f, 10.0f),     // position
-        glm::vec3(0.8f, 0.8f, 1.0f),      // color (cool)
+        glm::vec3(0.8f, 0.8f, 1.0f),      // diffuse color
         0.5f,                             // intensity
         0.01f,                             // ambient strength
         0.5f,                             // specular strength
-        0.2f                             // shininess
+        0.2f                             // shininess 
     );
 
     Light ambientLight(
         glm::vec3(0.0f, 0.0f, 0.0f),      // position (doesn't matter for ambient)
-        glm::vec3(0.2f, 0.2f, 0.3f),      // color (slight blue tint)
+        glm::vec3(0.2f, 0.2f, 0.3f),      // diffuse color (slight blue tint)
         0.5f,                             // intensity
         0.2f,                             // ambient strength
         0.0f,                             // specular strength
