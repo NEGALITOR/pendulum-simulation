@@ -1,5 +1,5 @@
 C++ = g++
-CFLAGS = -I/usr/include/freetype2/
+CFLAGS = -I/usr/include/freetype2/ -I./includes
 LDLIBS = -lGL -lGLEW -lglfw -lassimp -lfreetype
 HEADERS = opengl.h globals.h structs.h shader.h mesh.h model.h phaseSpacePlot.h rungeKutta.h textRender.h light.h
 OBJS = model.o mesh.o shader.o rungeKutta.o phaseSpacePlot.o textRender.o light.o
@@ -15,10 +15,10 @@ endif
 all: pendulum
 
 pendulum :	main.o $(OBJS) 
-	$(C++) $(CFLAGS) main.o $(OBJS) -o pen $(LDLIBS) $(soil)
+	$(C++) $(CFLAGS) main.o $(OBJS) $(soil) -o pen $(LDLIBS)
 
 main.o : main.cpp $(HEADERS)
-	$(C++) $(CFLAGS) main.cpp -c $(soil)
+	$(C++) $(CFLAGS) main.cpp -c
 
 shader.o : shader.cpp structs.h shader.h
 	$(C++) $(CFLAGS) shader.cpp -c
