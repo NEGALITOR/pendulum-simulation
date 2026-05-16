@@ -43,6 +43,12 @@ This project uses:
 
 This project is only supported on X11, however it can be adjusted to wayland by downloading the ```glfw-wayland``` instead.
 
+## Tested Platforms
+
+- **Arch Linux** — KDE Plasma on X11
+- **Fedora** — KDE Plasma on X11
+- **macOS Sequoia** — tested via Homebrew dependencies
+
 ### OpenGL Version Notes
 
 - macOS builds with OpenGL 4.1 and GLSL 410
@@ -57,12 +63,24 @@ sudo dnf install -y \
   glew-devel glfw-devel assimp-devel freetype-devel
 ```
 
+For the KDE Plasma X11 session:
+
+```bash
+sudo dnf install -y plasma-workspace-x11
+```
+
 ### Arch Linux (pacman)
 
 ```bash
 sudo pacman -S --needed \
   cmake base-devel git \
   mesa glew glfw-x11 assimp freetype2
+```
+
+For the KDE Plasma X11 session:
+
+```bash
+sudo pacman -S --needed plasma-x11-session
 ```
 
 ### Ubuntu (apt)
