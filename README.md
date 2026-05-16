@@ -19,8 +19,8 @@ https://drive.google.com/file/d/1cFP4FPt79auF1QMU16CCRoFMzxNcDLFH/view?usp=shari
 
 The simulation integrates:
 
-- $$\dot{\theta} = angular velocity
-- $$\ddot{\theta} = -b\dot{\theta} - \frac{g}{L}\sin\theta$$
+- theta dot = angular velocity
+- theta double dot = -b * theta dot + (g / L) * sin(theta)
 
 Where:
 
