@@ -36,8 +36,9 @@ This project uses:
 - Assimp
 - FreeType
 - C/C++ compiler toolchain
+- SOIL2 (SOIL2 is fetched and built from source automatically by CMake)
 
-SOIL2 is fetched and built from source automatically by CMake
+This project is only supported on X11, however it can be adjusted to wayland by downloading the ```glfw-wayland``` instead.
 
 ### OpenGL Version Notes
 
