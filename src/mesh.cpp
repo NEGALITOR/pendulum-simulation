@@ -29,6 +29,7 @@ void Mesh::Draw(Shader &shader)
     //cout << indices.size() << endl;
     //cout << vertices.size() << endl;
     //printf("%d\n", textures.size());
+    // Bind each texture unit and set the corresponding sampler uniform
     for(unsigned int i = 0; i < textures.size(); i++)
     {
         glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
@@ -54,6 +55,7 @@ void Mesh::Draw(Shader &shader)
         
     }
 
+    // Bind the mesh VAO and issue an indexed draw call
     glBindVertexArray(VAO);
 
     glEnable(GL_DEPTH_TEST);

@@ -4,7 +4,7 @@ project(PendulumSimulation LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# ── Dependencies ─────────────────────────────────────────────────────────────
+# Dependencies
 
 find_package(OpenGL REQUIRED)
 find_package(GLEW   REQUIRED)
@@ -36,20 +36,20 @@ if(APPLE)
     target_compile_definitions(SOIL2 PRIVATE GL_SILENCE_DEPRECATION)
 endif()
 
-# ── Sources ───────────────────────────────────────────────────────────────────
+# Source Files
 
 file(GLOB SOURCES "src/*.cpp")
 
 add_executable(pendulum ${SOURCES})
 
-# ── Include paths ─────────────────────────────────────────────────────────────
+# Include paths
 
 target_include_directories(pendulum PRIVATE
     include/
     ${FREETYPE_INCLUDE_DIRS}
 )
 
-# ── Link libraries ────────────────────────────────────────────────────────────
+# Link libraries
 
 target_link_libraries(pendulum PRIVATE
     OpenGL::GL
@@ -77,7 +77,7 @@ else()
     )
 endif()
 
-# ── Copy runtime assets next to the binary ───────────────────────────────────
+# Copy runtime assets next to the binary
 
 add_custom_command(TARGET pendulum POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory

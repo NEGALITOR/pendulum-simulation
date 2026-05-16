@@ -34,6 +34,7 @@ void Model::Draw(Shader &shader)
 void Model::loadModel(string path)
 {
     Assimp::Importer importer;
+    // Import with triangulation, smooth normals, UV correction, and tangent generation
     const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | 
                                                     aiProcess_CalcTangentSpace | aiProcess_FixInfacingNormals | aiProcess_GenUVCoords);
 
@@ -51,6 +52,7 @@ void Model::loadModel(string path)
 
 void Model::processNode(aiNode *node, const aiScene *scene)
 {
+    // Process all meshes referenced directly by this node
     for(unsigned int i = 0; i < node->mNumMeshes; i++)
     {
         
@@ -58,6 +60,7 @@ void Model::processNode(aiNode *node, const aiScene *scene)
         meshes.push_back(processMesh(mesh, scene));			
     }
 
+    // Recurse into child nodes to traverse the full scene hierarchy
     for(unsigned int i = 0; i < node->mNumChildren; i++)
     {
         
@@ -232,6 +235,7 @@ unsigned int Model::TextureFromFile(const aiScene *scene, aiString path)
                 glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, imgData);
                 glGenerateMipmap(GL_TEXTURE_2D);
         
+                // Configure wrapping and filtering modes for the uploaded texture
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);

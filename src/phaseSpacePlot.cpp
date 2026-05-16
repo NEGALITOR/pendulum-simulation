@@ -16,7 +16,7 @@ void PhaseSpacePlot::initPhaseSpaceShaders()
 {
     Shader phaseSpaceShader("shaders/phaseSpaceVShader.glsl", "shaders/phaseSpaceFShader.glsl");
     
-    // Create VAO and VBO for axes
+    // Create VAO and VBO for axes spanning the full theta and angular velocity range
     float axesVertices[] = {
         // X-axis
         -M_PI, 0.0f,
@@ -72,6 +72,7 @@ void PhaseSpacePlot::initPhaseSpaceShaders()
     glBindVertexArray(0);
     
     // Create VAO and VBO for trajectory
+    // The buffer is updated every frame with new theta/theta_dot pairs
     glGenVertexArrays(1, &trajectoryVAO);
     glGenBuffers(1, &trajectoryVBO);
     
@@ -200,7 +201,7 @@ void PhaseSpacePlot::renderPhaseSpacePlot(Shader phaseSpaceShader)
         glBindVertexArray(trajectoryVAO);
         glDrawArrays(GL_LINE_STRIP, 0, phaseTrajectory.size());
         
-        // Draw current point as a larger dot
+        // Highlight the current state position as a single oversized dot
         glPointSize(5.0f);
         phaseSpaceShader.setVec4("color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
         glDrawArrays(GL_POINTS, phaseTrajectory.size() - 1, 1);

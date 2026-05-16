@@ -42,23 +42,13 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     if (action == GLFW_PRESS) {
         switch (button) {
             case GLFW_MOUSE_BUTTON_RIGHT:
-                //deltaSpin += 0.5f; // Increase rotation speed
                 isPendulumStopped = true;
-                //models[3].setColor(glm::vec3(0.0f, 0.0f, 0.75f));
                 break;
             case GLFW_MOUSE_BUTTON_LEFT:
-                //deltaSpin -= 0.5f; // Decrease rotation speed
-
                 isPendulumStopped = false;
-                //deltaSpin = 0.0f;
-                // Change pendulum color to red when stopped
-                //models[3].setColor(glm::vec3(1.0f, 0.0f, 0.0f));
-
                 break;
             case GLFW_MOUSE_BUTTON_MIDDLE:
                 // Reset to original position and speed
-                //spinZ = 0.0f;
-                //deltaSpin = originalSpinRate;
                 isPendulumStopped = false;
 
                 u_time = 0.0f;         // Accumulated time
@@ -68,8 +58,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
                 u_L = user_L;            // Length of pendulum (L in equation)
                 u_theta = initialTheta;      // Current angle (θ)
                 u_theta_dot = 0.0f;    // Current angular velocity (θ̇)
-
-                //models[3].setColor(glm::vec3(0.0f, 0.0f, 0.75f)); // Reset to original color
                 break;
         }
     }
@@ -79,7 +67,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     const float moveSpeed = 0.02f;
     const float radiusSpeed = 0.05f;
-    //if (action == GLFW_REPEAT) cout << "done" <<endl;
     if (action == GLFW_PRESS || action == GLFW_REPEAT) 
     {
         switch (key) 
@@ -155,6 +142,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     }
 }
 
+// Loads all shaders, scene models, and light sources into the global vectors
 void setupVertices(void) {
 
 	Shader staticShader("shaders/vertShader.glsl", "shaders/fragShader.glsl");
@@ -163,6 +151,7 @@ void setupVertices(void) {
     Shader pendulumShader("shaders/vertShader.glsl", "shaders/fragShader.glsl");
 	shaders.push_back(pendulumShader);
 
+    // Furniture and room geometry share a common world transform offset
     Model room("models/glb/room/room.glb");
 	room.setPosition(glm::vec3 {0.0f, -2.0f, -12.0f});
     room.setRotation(glm::vec3{0.0f, 0.0f, -35.0f});
@@ -188,6 +177,7 @@ void setupVertices(void) {
     whiteboard.setRotation(glm::vec3{0.0f, 0.0f, -35.0f});
 	models.push_back(whiteboard);
 
+    // Standalone light fixture models placed independently of the furniture group
     Model lamp("models/glb/lamp/lamp.glb");
     lamp.setPosition(glm::vec3 {7.0f, -3.0f, -1.5f});
     models.push_back(lamp);
@@ -196,7 +186,7 @@ void setupVertices(void) {
     rooflamp.setPosition(glm::vec3 {0.0f, 0.0f, 25.0f});
     models.push_back(rooflamp);
 
-	//Model test("models/glb/base.glb");
+	// Pendulum apparatus: base, support arm, and the swinging bob
 	Model base("models/glb/base/base.glb");
 	base.setPosition(glm::vec3 {0.0f, 0.0f, -1.0f});
 	models.push_back(base);
@@ -245,12 +235,11 @@ void setupVertices(void) {
     );
 
     lightManager.addLight(lampLight);
-    //lightManager.addLight(roofLampLight);
     lightManager.addLight(ambientLight);
 }
 
+// Sets initial camera position, spin state, physics variables, and input callbacks
 void init(GLFWwindow* window) {
-    //renderingProgram = createShaderProgram();
     // These are the camera positions and cube locations.
     cameraX = -8.0f; cameraY = -5.0f; cameraZ = 3.0f;
     cubeLocX = 0.0f; cubeLocY = 0.0f; cubeLocZ = 0.0f;
@@ -275,6 +264,7 @@ void init(GLFWwindow* window) {
 }
 
 
+// Updates physics simulation and renders all scene geometry plus HUD overlays each frame
 void display(GLFWwindow* window, double currentTime) {
 
     static double lastTime = 0.0;
@@ -293,7 +283,7 @@ void display(GLFWwindow* window, double currentTime) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     int i;
-    // Draw base and support first
+    // Draw all static scene models; skip the last entry which is the pendulum
     for (i = 0; i < models.size()-1; i++) {
         shaders[0].use();
 
@@ -325,7 +315,6 @@ void display(GLFWwindow* window, double currentTime) {
         
         models[i].Draw(shaders[0]);
     }
-    //printf("%d\n", i);
 
     // Draw the pendulum
     shaders[1].use();
@@ -396,6 +385,7 @@ void display(GLFWwindow* window, double currentTime) {
     textRenderer.renderText(shaders[3], gravityText, 25.0f, 275.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
 }
 
+// Entry point: initializes GLFW/GLEW, parses arguments, sets up the scene, and runs the loop
 int main(int argc, char* argv[]) 
 {
     if (!glfwInit()) { exit(EXIT_FAILURE); }
@@ -409,11 +399,10 @@ int main(int argc, char* argv[])
     glfwMakeContextCurrent(window);
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) { exit(EXIT_FAILURE); }
-    //glfwSwapInterval(1);
     
+    // Accept optional CLI arguments: initial angle (deg), damping coefficient, length, gravity
     if (argc > 1)
     {
-        //cout << argv[1] << endl;
         float angle = atof(argv[1]);
         if (angle <= 180 && angle >= 0)
             initialTheta = glm::radians(angle);
@@ -436,6 +425,7 @@ int main(int argc, char* argv[])
 
     init(window);
 
+    // Main render loop
     while (!glfwWindowShouldClose(window)) {
         display(window, glfwGetTime());
         glfwSwapBuffers(window);

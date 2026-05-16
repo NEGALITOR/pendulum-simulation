@@ -16,6 +16,7 @@ void TextRender::initTextRenderShaders(int fontSize)
     Shader textRenderShader("shaders/textRenderVShader.glsl", "shaders/textRenderFShader.glsl");
 
     
+    // Allocate a VAO and dynamic VBO for streaming per-character quad vertices
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
 
@@ -44,6 +45,7 @@ void TextRender::generateFontTextures()
     // Disable byte-alignment restriction
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1); 
 
+    // Rasterize and upload a greyscale glyph texture for each printable ASCII character
     for (unsigned char c = 0; c < 128; c++) {
         // Load character glyph 
         if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
@@ -185,7 +187,7 @@ void TextRender::renderText(Shader &shader, std::string text, float x, float y, 
         //std::cout << "Rendering '" << *c << "' at (" << xpos << "," << ypos << ") with size " 
         //      << w << "x" << h << std::endl;
 
-        // Texture coordinates
+        // Build a screen-space quad for this glyph using two triangles
         float vertices[6][4] = {
             { xpos,     ypos + h,   0.0f, 0.0f },  // Top-left
             { xpos,     ypos,       0.0f, 1.0f },  // Bottom-left

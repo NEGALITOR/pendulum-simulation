@@ -40,7 +40,6 @@ class Model
         void processNode(aiNode *node, const aiScene *scene);
         Mesh processMesh(aiMesh *mesh, const aiScene *scene);
         vector<Texture> loadMaterialTextures(const aiScene *scene, aiMaterial *mat, aiTextureType type, string typeName);
-        //unsigned int TextureFromFile(const char *path, const string &directory);
         unsigned int TextureFromFile(const aiScene *scene, aiString path);
 };
 

@@ -1,4 +1,4 @@
-// Add to your implementation file
+// Tracks per-frame timing and a smoothed FPS value updated every 0.5 seconds
 double frameTime = 0.0;
 double frameRate = 0.0;
 bool showProperties = true;

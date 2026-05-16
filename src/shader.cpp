@@ -43,22 +43,26 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
 
 	unsigned int vertex, fragment;
 
+	// Compile vertex shader
 	vertex = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertex, 1, &vShaderCode, NULL);
 	glCompileShader(vertex);
 	checkCompileErrors(vertex, "VERTEX");
 
+	// Compile fragment shader
 	fragment = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragment, 1, &fShaderCode, NULL);
 	glCompileShader(fragment);
 	checkCompileErrors(fragment, "FRAGMENT");
 
+	// Link compiled shaders into a program
 	ID = glCreateProgram();
 	glAttachShader(ID, vertex);
 	glAttachShader(ID, fragment);
 	glLinkProgram(ID);
 	checkCompileErrors(ID, "PROGRAM");
 
+	// Release individual shader objects now that they are linked into the program
 	glDeleteShader(vertex);
 	glDeleteShader(fragment);
 }

@@ -20,6 +20,7 @@ float user_g = u_g;
 static float lastZeroCrossTime = 0.0f;
 float pendulumPeriod = 0.0f;
 
+// Returns the time derivatives of state (damped nonlinear pendulum: theta'' = -(b*theta') - (g/L)*sin(theta))
 PendulumState derivative(const PendulumState& state) 
 {
     PendulumState dState;
@@ -70,6 +71,7 @@ void updatePendulum(float deltaTime) {
 
     
     
+    // Detect positive-to-negative angular velocity crossing to measure one full oscillation period
     if (state.theta_dot > 0 && u_theta_dot < 0)
     {
         // If we've crossed before, calculate period
