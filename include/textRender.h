@@ -16,7 +16,6 @@ class TextRender
 public:
 
     GLuint VAO, VBO;
-    //Shader renderTextShader;
 
     FT_Library ft;
     FT_Face face;
