@@ -83,16 +83,6 @@ For the KDE Plasma X11 session:
 sudo pacman -S --needed plasma-x11-session
 ```
 
-### Ubuntu (apt)
-
-```bash
-sudo apt update
-sudo apt install -y \
-  build-essential cmake git \
-  libgl1-mesa-dev \
-  libglew-dev libglfw3-dev libassimp-dev libfreetype6-dev
-```
-
 ### macOS (Homebrew)
 
 ```bash
