@@ -15,10 +15,12 @@ https://drive.google.com/file/d/1cFP4FPt79auF1QMU16CCRoFMzxNcDLFH/view?usp=shari
 
 ## Physics Model
 
+**NOTE! REFER TO MATH.md FOR MORE COMPREHENSIVE MATH EXPLANATION!**
+
 The simulation integrates:
 
-- theta dot = angular velocity
-- theta double dot = -(b * theta dot + (g / L) * sin(theta))
+- $$\dot{\theta} = angular velocity
+- $$\ddot{\theta} = -b\dot{\theta} - \frac{g}{L}\sin\theta$$
 
 Where:
 
