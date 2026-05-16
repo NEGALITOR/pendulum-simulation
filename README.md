@@ -3,6 +3,7 @@
 Real-time 3D damped pendulum simulation rendered with OpenGL, including a live phase-space plot and on-screen telemetry.
 
 ## Video Explanation
+Note: The code in the video is an implementation I made a year ago, however the logic should follow regardless.
 https://drive.google.com/file/d/1cFP4FPt79auF1QMU16CCRoFMzxNcDLFH/view?usp=sharing
 
 ## What This Application Does
