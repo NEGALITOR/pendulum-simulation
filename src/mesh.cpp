@@ -86,9 +86,9 @@ void Mesh::setupMesh()
 {
     
     // create buffers/arrays
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
+    VAO.generate();
+    VBO.generate();
+    EBO.generate();
 
     glBindVertexArray(VAO);
     // load data into vertex buffers

@@ -3,6 +3,7 @@
 
 #include "globals.h"
 #include "structs.h"
+#include "glObjects.h"
 
 
 
@@ -11,18 +12,21 @@ class PhaseSpacePlot
 
 public:
 
-    GLuint axesVAO, axesVBO;
-    GLuint gridVAO, gridVBO;
-    GLuint trajectoryVAO, trajectoryVBO;
+    GLVAO    axesVAO;
+    GLBuffer axesVBO;
+    GLVAO    gridVAO;
+    GLBuffer gridVBO;
+    GLVAO    trajectoryVAO;
+    GLBuffer trajectoryVBO;
+    GLVAO    backgroundVAO;
+    GLBuffer backgroundVBO;
+
     void renderPhaseSpacePlot(Shader phaseSpaceShader);
 
     // Initialize the shader program and buffers
     void initPhaseSpaceShaders();
 
 private:    
-    
-    // Clean up the shader resources
-    void cleanupPhaseSpaceShaders(Shader phaseSpaceShader);
 
     // Update the trajectory buffer with the latest phase space points
     void updateTrajectoryBuffer();

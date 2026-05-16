@@ -6,6 +6,7 @@
 
 #include <string>
 #include <vector>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 
@@ -30,17 +31,17 @@ class Model
         void setRotation(glm::vec3 rot);
         void setScale(glm::vec3 scale);
 
-        Model(const char *path);
+        Model(const std::filesystem::path& path);
         void Draw(Shader &shader);
         
        
     private:
 
-        void loadModel(string path);
-        void processNode(aiNode *node, const aiScene *scene);
-        Mesh processMesh(aiMesh *mesh, const aiScene *scene);
-        vector<Texture> loadMaterialTextures(const aiScene *scene, aiMaterial *mat, aiTextureType type, string typeName);
-        unsigned int TextureFromFile(const aiScene *scene, aiString path);
+        void loadModel(const std::filesystem::path& path);
+        void processNode(const aiNode* node, const aiScene* scene);
+        Mesh processMesh(const aiMesh* mesh, const aiScene* scene);
+        vector<Texture> loadMaterialTextures(const aiScene* scene, const aiMaterial* mat, aiTextureType type, string typeName);
+        unsigned int TextureFromFile(const aiScene* scene, aiString path);
 };
 
 

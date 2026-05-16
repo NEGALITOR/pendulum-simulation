@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cmath>
+#include <memory>
 
 #include "opengl.h"
 
@@ -10,7 +11,13 @@
 #include "shader.h"
 #include "textRender.h"
 
-extern GLFWwindow* window;
+// Custom deleter so unique_ptr calls glfwDestroyWindow on scope exit
+struct GLFWwindowDeleter {
+    void operator()(GLFWwindow* w) const { glfwDestroyWindow(w); }
+};
+using UniqueWindow = std::unique_ptr<GLFWwindow, GLFWwindowDeleter>;
+
+extern UniqueWindow window;
 const GLuint WINDOW_WIDTH = 600;
 extern int width, height;
 
