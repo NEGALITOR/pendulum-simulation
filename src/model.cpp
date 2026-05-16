@@ -12,7 +12,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-#include "includes/SOIL2/soil2.h"
+#include <SOIL2/SOIL2.h>
 
 
 Model::Model(const char *path)

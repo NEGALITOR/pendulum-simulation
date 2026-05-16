@@ -21,6 +21,9 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
 		fShaderFile.open(fragmentPath);
 		stringstream vShaderStream, fShaderstream;
 
+		vShaderStream << "#version " << GLSL_VERSION << "\n";
+		fShaderstream << "#version " << GLSL_VERSION << "\n";
+
 		vShaderStream << vShaderFile.rdbuf();
 		fShaderstream << fShaderFile.rdbuf();
 
