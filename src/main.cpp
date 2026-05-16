@@ -10,7 +10,7 @@
 
 #include "light.h"
 
-GLFWwindow* window;
+UniqueWindow window;
 float cameraX, cameraY, cameraZ;
 float cubeLocX, cubeLocY, cubeLocZ;
 float spinZ, deltaSpin;
@@ -155,51 +155,51 @@ void setupVertices(void) {
     Model room("models/glb/room/room.glb");
 	room.setPosition(glm::vec3 {0.0f, -2.0f, -12.0f});
     room.setRotation(glm::vec3{0.0f, 0.0f, -35.0f});
-	models.push_back(room);
+	models.push_back(std::move(room));
 
     Model table("models/glb/table/table.glb");
 	table.setPosition(glm::vec3 {0.0f, -2.0f, -12.0f});
     table.setRotation(glm::vec3{0.0f, 0.0f, -35.0f});
-	models.push_back(table);
+	models.push_back(std::move(table));
     
     Model chair("models/glb/chair/chair.glb");
 	chair.setPosition(glm::vec3 {0.0f, -2.0f, -12.0f});
     chair.setRotation(glm::vec3{0.0f, 0.0f, -35.0f});
-	models.push_back(chair);
+	models.push_back(std::move(chair));
     
     Model trash("models/glb/trash/trash.glb");
 	trash.setPosition(glm::vec3 {0.0f, -2.0f, -12.0f});
     trash.setRotation(glm::vec3{0.0f, 0.0f, -35.0f});
-	models.push_back(trash);
+	models.push_back(std::move(trash));
 
     Model whiteboard("models/glb/whiteboard/whiteboard.glb");
 	whiteboard.setPosition(glm::vec3 {0.0f, -2.0f, -12.0f});
     whiteboard.setRotation(glm::vec3{0.0f, 0.0f, -35.0f});
-	models.push_back(whiteboard);
+	models.push_back(std::move(whiteboard));
 
     // Standalone light fixture models placed independently of the furniture group
     Model lamp("models/glb/lamp/lamp.glb");
     lamp.setPosition(glm::vec3 {7.0f, -3.0f, -1.5f});
-    models.push_back(lamp);
+    models.push_back(std::move(lamp));
 
     Model rooflamp("models/glb/rooflamp/rooflamp.glb");
     rooflamp.setPosition(glm::vec3 {0.0f, 0.0f, 25.0f});
-    models.push_back(rooflamp);
+    models.push_back(std::move(rooflamp));
 
 	// Pendulum apparatus: base, support arm, and the swinging bob
 	Model base("models/glb/base/base.glb");
 	base.setPosition(glm::vec3 {0.0f, 0.0f, -1.0f});
-	models.push_back(base);
+	models.push_back(std::move(base));
 	
 	Model support("models/glb/support/support.glb");
 	support.setPosition(glm::vec3 {2.0f, 0.0f, -0.5f});
-	models.push_back(support);
+	models.push_back(std::move(support));
 
 	Model pendulum("models/glb/pendulum/pendulum.glb");
 	pendulum.setPosition(glm::vec3 {0.0f, 0.0f, 3.05f});
 	pendulum.setRotation(glm::vec3{0.0f, 0.0f, 90.0f});
 	pendulum.setScale(glm::vec3{0.6f, 0.6f, 0.6f});
-	models.push_back(pendulum);
+	models.push_back(std::move(pendulum));
 
     
     plot.initPhaseSpaceShaders();
@@ -283,7 +283,7 @@ void display(GLFWwindow* window, double currentTime) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     int i;
-    // Draw all static scene models; skip the last entry which is the pendulum
+    // Draw all static scene models, skip the last entry which is the pendulum for physics related stuff
     for (i = 0; i < models.size()-1; i++) {
         shaders[0].use();
 
@@ -385,54 +385,59 @@ void display(GLFWwindow* window, double currentTime) {
     textRenderer.renderText(shaders[3], gravityText, 25.0f, 275.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
 }
 
-// Entry point: initializes GLFW/GLEW, parses arguments, sets up the scene, and runs the loop
+// Initializes GLFW/GLEW, parses arguments, sets up the scene, and runs the loop
 int main(int argc, char* argv[]) 
 {
     if (!glfwInit()) { exit(EXIT_FAILURE); }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_MAJOR_VERSION);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_MINOR_VERSION);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-    window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_WIDTH, "Pendulum Simulation", NULL, NULL);
-    glfwMakeContextCurrent(window);
+
+    window = UniqueWindow(glfwCreateWindow(WINDOW_WIDTH, WINDOW_WIDTH, "Pendulum Simulation", NULL, NULL));
+    glfwMakeContextCurrent(window.get());
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) { exit(EXIT_FAILURE); }
     
-    // Accept optional CLI arguments: initial angle (deg), damping coefficient, length, gravity
+    // Optional CLI arguments
+    // initial angle (deg)
     if (argc > 1)
     {
         float angle = atof(argv[1]);
         if (angle <= 180 && angle >= 0)
             initialTheta = glm::radians(angle);
     }
+    // damping coefficient
     if (argc > 2)
     {
         user_b = atof(argv[2]);
         u_b = user_b;
     }
+    // length
     if (argc > 3)
     {
         user_L = atof(argv[3]);
         u_L = user_L;
     }
+    // gravity
     if (argc > 4)
     {
         user_g = atof(argv[4]);
         u_g = user_g;
     }
 
-    init(window);
+    init(window.get());
 
     // Main render loop
-    while (!glfwWindowShouldClose(window)) {
-        display(window, glfwGetTime());
-        glfwSwapBuffers(window);
+    while (!glfwWindowShouldClose(window.get())) {
+        display(window.get(), glfwGetTime());
+        glfwSwapBuffers(window.get());
         glfwPollEvents();
     }
 
-    glfwDestroyWindow(window);
     glfwTerminate();
     exit(EXIT_SUCCESS);
 }

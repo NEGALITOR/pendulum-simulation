@@ -7,10 +7,6 @@ std::vector<std::pair<float, float>> phaseTrajectory;
 #include <string>
 #include <iostream>
 
-GLuint axesVAO, axesVBO;
-GLuint gridVAO, gridVBO;
-GLuint trajectoryVAO, trajectoryVBO;
-
 // Initialize the shader program and buffers
 void PhaseSpacePlot::initPhaseSpaceShaders() 
 {
@@ -26,9 +22,9 @@ void PhaseSpacePlot::initPhaseSpaceShaders()
         0.0f, 10.0f
     };
     
-    glGenVertexArrays(1, &axesVAO);
-    glGenBuffers(1, &axesVBO);
-    
+    axesVAO.generate();
+    axesVBO.generate();
+
     glBindVertexArray(axesVAO);
     glBindBuffer(GL_ARRAY_BUFFER, axesVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(axesVertices), axesVertices, GL_STATIC_DRAW);
@@ -58,9 +54,9 @@ void PhaseSpacePlot::initPhaseSpaceShaders()
         gridVertices.push_back(10.0f);
     }
     
-    glGenVertexArrays(1, &gridVAO);
-    glGenBuffers(1, &gridVBO);
-    
+    gridVAO.generate();
+    gridVBO.generate();
+
     glBindVertexArray(gridVAO);
     glBindBuffer(GL_ARRAY_BUFFER, gridVBO);
     glBufferData(GL_ARRAY_BUFFER, gridVertices.size() * sizeof(float), gridVertices.data(), GL_STATIC_DRAW);
@@ -73,9 +69,9 @@ void PhaseSpacePlot::initPhaseSpaceShaders()
     
     // Create VAO and VBO for trajectory
     // The buffer is updated every frame with new theta/theta_dot pairs
-    glGenVertexArrays(1, &trajectoryVAO);
-    glGenBuffers(1, &trajectoryVBO);
-    
+    trajectoryVAO.generate();
+    trajectoryVBO.generate();
+
     glBindVertexArray(trajectoryVAO);
     glBindBuffer(GL_ARRAY_BUFFER, trajectoryVBO);
     
@@ -84,20 +80,31 @@ void PhaseSpacePlot::initPhaseSpaceShaders()
     
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-    
-    shaders.push_back(phaseSpaceShader);
-}
 
-// Clean up the shader resources
-void PhaseSpacePlot::cleanupPhaseSpaceShaders(Shader phaseSpaceShader) 
-{
-    glDeleteProgram(phaseSpaceShader.getID());
-    glDeleteVertexArrays(1, &axesVAO);
-    glDeleteBuffers(1, &axesVBO);
-    glDeleteVertexArrays(1, &gridVAO);
-    glDeleteBuffers(1, &gridVBO);
-    glDeleteVertexArrays(1, &trajectoryVAO);
-    glDeleteBuffers(1, &trajectoryVBO);
+    // Create VAO and VBO for the background quad (static, initialized once here)
+    const float thetaRange    = 2.0f * static_cast<float>(M_PI);
+    const float thetaDotRange = 20.0f;
+    float backgroundVertices[] = {
+        -thetaRange/2, -thetaDotRange/2,
+         thetaRange/2, -thetaDotRange/2,
+         thetaRange/2,  thetaDotRange/2,
+        -thetaRange/2,  thetaDotRange/2
+    };
+
+    backgroundVAO.generate();
+    backgroundVBO.generate();
+
+    glBindVertexArray(backgroundVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(backgroundVertices), backgroundVertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    shaders.push_back(phaseSpaceShader);
 }
 
 
@@ -125,7 +132,7 @@ void PhaseSpacePlot::renderPhaseSpacePlot(Shader phaseSpaceShader)
     
     // Get the current window size
     int windowWidth, windowHeight;
-    glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
+    glfwGetFramebufferSize(window.get(), &windowWidth, &windowHeight);
     
     // Define the plot area in the lower right corner (1/4 of the window)
     int plotWidth = windowWidth / 4;
@@ -158,30 +165,10 @@ void PhaseSpacePlot::renderPhaseSpacePlot(Shader phaseSpaceShader)
     
     // Draw plot background
     phaseSpaceShader.setVec4("color", glm::vec4(0.1f, 0.1f, 0.1f, 0.7f));
-    
-    float backgroundVertices[] = {
-        -thetaRange/2, -thetaDotRange/2,
-        thetaRange/2, -thetaDotRange/2,
-        thetaRange/2, thetaDotRange/2,
-        -thetaRange/2, thetaDotRange/2
-    };
-    
-    GLuint backgroundVAO, backgroundVBO;
-    glGenVertexArrays(1, &backgroundVAO);
-    glGenBuffers(1, &backgroundVBO);
-    
+
     glBindVertexArray(backgroundVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(backgroundVertices), backgroundVertices, GL_STATIC_DRAW);
-    
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    
-    glDeleteVertexArrays(1, &backgroundVAO);
-    glDeleteBuffers(1, &backgroundVBO);
-    
+
     // Draw grid
     phaseSpaceShader.setVec4("color", glm::vec4(0.3f, 0.3f, 0.3f, 1.0f));
     glBindVertexArray(gridVAO);

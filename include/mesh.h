@@ -3,6 +3,7 @@
 
 #include "structs.h"
 #include "shader.h"
+#include "glObjects.h"
 
 #include <vector>
 
@@ -13,7 +14,9 @@ class Mesh
         vector<unsigned int> indices;
         vector<Texture> textures;
 
-        unsigned int VAO, VBO, EBO;
+        GLVAO    VAO;
+        GLBuffer VBO;
+        GLBuffer EBO;
 
         Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures);
         void Draw(Shader &shader);

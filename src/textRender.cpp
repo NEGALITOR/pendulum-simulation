@@ -6,19 +6,14 @@
 #include "structs.h"
 #include "textRender.h"
 
-FT_Library ft;
-FT_Face face;
-
-GLuint VAO, VBO;
-
 void TextRender::initTextRenderShaders(int fontSize) 
 {
     Shader textRenderShader("shaders/textRenderVShader.glsl", "shaders/textRenderFShader.glsl");
 
     
     // Allocate a VAO and dynamic VBO for streaming per-character quad vertices
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+    VAO.generate();
+    VBO.generate();
 
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -48,7 +43,7 @@ void TextRender::generateFontTextures()
     // Rasterize and upload a greyscale glyph texture for each printable ASCII character
     for (unsigned char c = 0; c < 128; c++) {
         // Load character glyph 
-        if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
+        if (FT_Load_Char(face.get(), c, FT_LOAD_RENDER)) {
             std::cerr << "ERROR: Failed to load Glyph" << std::endl;
             continue;
         }
@@ -90,19 +85,23 @@ void TextRender::generateFontTextures()
 void TextRender::loadFont(int fontSize)
 {
     // Initialize FreeType
-    if (FT_Init_FreeType(&ft)) {
+    FT_Library rawFt = nullptr;
+    if (FT_Init_FreeType(&rawFt)) {
         std::cerr << "Could not initialize FreeType library." << std::endl;
         exit(1);
     }
+    ft.reset(rawFt);
 
     // Load font face
-    if (FT_New_Face(ft, "fonts/UniversCondensed.ttf", 0, &face)) {
+    FT_Face rawFace = nullptr;
+    if (FT_New_Face(ft.get(), "fonts/UniversCondensed.ttf", 0, &rawFace)) {
         std::cerr << "Could not load font." << std::endl;
         exit(1);
     }
+    face.reset(rawFace);
 
     // Set font size
-    FT_Set_Pixel_Sizes(face, 0, fontSize); // Adjust the size to your needs
+    FT_Set_Pixel_Sizes(face.get(), 0, fontSize); // Adjust the size to your needs
 }
 
 
@@ -112,7 +111,7 @@ void TextRender::renderText(Shader &shader, std::string text, float x, float y, 
    
     // Get the current window size
     int windowWidth, windowHeight;
-    glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
+    glfwGetFramebufferSize(window.get(), &windowWidth, &windowHeight);
 
     // Define the plot area in the lower right corner (1/4 of the window)
     float plotWidth = windowWidth / 2;

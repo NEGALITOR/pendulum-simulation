@@ -5,6 +5,8 @@
 
 #include <string>
 #include <vector>
+#include <memory>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 
@@ -15,7 +17,7 @@
 #include <SOIL2/SOIL2.h>
 
 
-Model::Model(const char *path)
+Model::Model(const std::filesystem::path& path)
 {
     loadModel(path);
 }
@@ -23,19 +25,16 @@ Model::Model(const char *path)
 
 void Model::Draw(Shader &shader)
 {
-    for(unsigned int i = 0; i < meshes.size(); i++)
-    {
-        //cout << meshes.size() << endl;
-        meshes[i].Draw(shader);
-    }
+    for (auto& mesh : meshes)
+        mesh.Draw(shader);
 }
 
 
-void Model::loadModel(string path)
+void Model::loadModel(const std::filesystem::path& path)
 {
     Assimp::Importer importer;
     // Import with triangulation, smooth normals, UV correction, and tangent generation
-    const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | 
+    const aiScene *scene = importer.ReadFile(path.string(), aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | 
                                                     aiProcess_CalcTangentSpace | aiProcess_FixInfacingNormals | aiProcess_GenUVCoords);
 
     if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) 
@@ -44,19 +43,19 @@ void Model::loadModel(string path)
         return;
     }
 
-    directory = path.substr(0, path.find_last_of('/'));
+    directory = path.parent_path().string();
 
     processNode(scene->mRootNode, scene);
     
 }
 
-void Model::processNode(aiNode *node, const aiScene *scene)
+void Model::processNode(const aiNode* node, const aiScene* scene)
 {
     // Process all meshes referenced directly by this node
     for(unsigned int i = 0; i < node->mNumMeshes; i++)
     {
         
-        aiMesh *mesh = scene->mMeshes[node->mMeshes[i]]; 
+        const aiMesh* mesh = scene->mMeshes[node->mMeshes[i]]; 
         meshes.push_back(processMesh(mesh, scene));			
     }
 
@@ -69,7 +68,7 @@ void Model::processNode(aiNode *node, const aiScene *scene)
     
 }
 
-Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
+Mesh Model::processMesh(const aiMesh* mesh, const aiScene* scene)
 {
     vector<Vertex> vertices;
     vector<unsigned int> indices;
@@ -131,7 +130,7 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
     //cout << sizeof(scene->mMaterials)/sizeof(scene->mMaterials[0]) << endl;
 
     // process materials
-    aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+    const aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
     
 
         // diffuse
@@ -152,11 +151,11 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene *scene)
         textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
         
     
-    return Mesh(vertices, indices, textures);
+    return Mesh(std::move(vertices), std::move(indices), std::move(textures));
 
 }
 
-vector<Texture> Model::loadMaterialTextures(const aiScene *scene, aiMaterial *mat, aiTextureType type, string typeName)
+vector<Texture> Model::loadMaterialTextures(const aiScene* scene, const aiMaterial* mat, aiTextureType type, string typeName)
 {
     
     vector<Texture> textures;
@@ -193,7 +192,7 @@ vector<Texture> Model::loadMaterialTextures(const aiScene *scene, aiMaterial *ma
     
 }
 
-unsigned int Model::TextureFromFile(const aiScene *scene, aiString path)
+unsigned int Model::TextureFromFile(const aiScene* scene, aiString path)
 {
 
     unsigned int textureID;
@@ -214,10 +213,13 @@ unsigned int Model::TextureFromFile(const aiScene *scene, aiString path)
             std::memcpy(textureData.data(), texture->pcData, dataSize);
 
             // Load the image from memory using SOIL2
-            unsigned char* imgData = SOIL_load_image_from_memory(
-                textureData.data(),   // Pointer to the raw texture data
-                textureData.size(),   // Size of the data
-                &width, &height, &channels, SOIL_LOAD_AUTO
+            auto imgData = std::unique_ptr<unsigned char, decltype(&SOIL_free_image_data)>(
+                SOIL_load_image_from_memory(
+                    textureData.data(),
+                    static_cast<int>(textureData.size()),
+                    &width, &height, &channels, SOIL_LOAD_AUTO
+                ),
+                SOIL_free_image_data
             );
 
             if (imgData) {
@@ -232,7 +234,7 @@ unsigned int Model::TextureFromFile(const aiScene *scene, aiString path)
                     format = GL_RGBA;
         
                 glBindTexture(GL_TEXTURE_2D, textureID);
-                glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, imgData);
+                glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, imgData.get());
                 glGenerateMipmap(GL_TEXTURE_2D);
         
                 // Configure wrapping and filtering modes for the uploaded texture
@@ -240,12 +242,8 @@ unsigned int Model::TextureFromFile(const aiScene *scene, aiString path)
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-                // Freeing imgdata
-                SOIL_free_image_data(imgData);
             } else {
                 std::cerr << "Failed to load image from memory!" << std::endl;
-                SOIL_free_image_data(imgData);
             }
         }
         
